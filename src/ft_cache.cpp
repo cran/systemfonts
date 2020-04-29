@@ -8,7 +8,24 @@ static FT_Error face_requester(FTC_FaceID face_id, FT_Library library,
   return FT_New_Face(library, face->first.c_str(), face->second, aface);
 }
 
-FreetypeCache::FreetypeCache() : cached_unscaled_loaded(false) {
+FreetypeCache::FreetypeCache() 
+  : error_code(0),
+    glyphstore(),
+    unscaled_glyphstore(),
+    cur_id({"", -1}),
+    cur_size(-1), 
+    cur_res(-1),
+    cur_can_kern(false),
+    cur_glyph(0),
+    cur_has_size(false),
+    cur_is_scaled(true),
+    cur_cached_unscaled_size(0),
+    cur_cached_unscaled_res(0),
+    cached_unscaled_loaded(false),
+    cached_unscaled_scaling(1),
+    id_lookup(),
+    id_pool()
+  {
   FT_Error err = FT_Init_FreeType(&library);
   if (err == 0) {
     err = FTC_Manager_New(library, 0, 0, 0, &face_requester, NULL, &manager);
@@ -146,8 +163,8 @@ bool FreetypeCache::load_new_unscaled(FaceID id, double req_size, double req_res
   return load_cached_unscaled(req_size, req_res);
 }
 
-bool FreetypeCache::has_glyph(u_int32_t index) {
-  FT_UInt glyph_id;
+bool FreetypeCache::has_glyph(uint32_t index) {
+  FT_UInt glyph_id = 0;
   if (cur_is_scaled) {
     glyph_id = FTC_CMapCache_Lookup(charmaps, (FTC_FaceID) &cur_id, -1, index);
   } else {
@@ -156,14 +173,14 @@ bool FreetypeCache::has_glyph(u_int32_t index) {
   return glyph_id != 0;
 }
 
-bool FreetypeCache::load_glyph(u_int32_t index) {
-  FT_UInt glyph_id;
+bool FreetypeCache::load_glyph(uint32_t index) {
+  FT_UInt glyph_id = 0;
   if (cur_is_scaled) {
     glyph_id = FTC_CMapCache_Lookup(charmaps, (FTC_FaceID) &cur_id, -1, index);
   } else {
     glyph_id = FT_Get_Char_Index(face, index);
   }
-  FT_Error err;
+  FT_Error err = 0;
   err = FT_Load_Glyph(face, glyph_id, cur_is_scaled ? FT_LOAD_NO_BITMAP : FT_LOAD_DEFAULT);
   error_code = err;
   if (err == 0) {
@@ -173,7 +190,7 @@ bool FreetypeCache::load_glyph(u_int32_t index) {
 }
 
 FontInfo FreetypeCache::font_info() {
-  FontInfo res;
+  FontInfo res = {};
   res.family = std::string(face->family_name);
   res.style = std::string(face->style_name);
   res.is_italic = face->style_flags & FT_STYLE_FLAG_ITALIC;
@@ -224,7 +241,7 @@ FontInfo FreetypeCache::font_info() {
 }
 
 GlyphInfo FreetypeCache::glyph_info() {
-  GlyphInfo res;
+  GlyphInfo res = {};
   
   res.index = cur_glyph;
   res.width = face->glyph->metrics.width;
@@ -259,11 +276,11 @@ GlyphInfo FreetypeCache::glyph_info() {
   return res;
 }
 
-GlyphInfo FreetypeCache::cached_glyph_info(u_int32_t index, int& error) {
-  std::map<u_int32_t, GlyphInfo>* active_store = cur_is_scaled ? &glyphstore : &unscaled_glyphstore;
+GlyphInfo FreetypeCache::cached_glyph_info(uint32_t index, int& error) {
+  std::map<uint32_t, GlyphInfo>* active_store = cur_is_scaled ? &glyphstore : &unscaled_glyphstore;
   
-  std::map<u_int32_t, GlyphInfo>::iterator cached_gi = active_store->find(index);
-  GlyphInfo info;
+  std::map<uint32_t, GlyphInfo>::iterator cached_gi = active_store->find(index);
+  GlyphInfo info = {};
   error = 0;
   
   if (cached_gi == active_store->end()) {
@@ -290,14 +307,14 @@ long FreetypeCache::cur_descender() {
   return FT_MulFix(face->descender, size->metrics.y_scale);
 }
 
-bool FreetypeCache::apply_kerning(u_int32_t left, u_int32_t right, long &x, long &y) {
+bool FreetypeCache::apply_kerning(uint32_t left, uint32_t right, long &x, long &y) {
   // Early exit
   if (!cur_can_kern) return true;
   
   FT_UInt left_id = FTC_CMapCache_Lookup(charmaps, (FTC_FaceID) &cur_id, -1, left);
   FT_UInt right_id = FTC_CMapCache_Lookup(charmaps, (FTC_FaceID) &cur_id, -1, right);
   
-  FT_Vector delta;
+  FT_Vector delta = {};
   
   FT_Error error = FT_Get_Kerning(face, left_id, right_id, FT_KERNING_DEFAULT, &delta);
   
@@ -318,4 +335,4 @@ double FreetypeCache::tracking_diff(double tracking) {
   } else {
     return (double) face->units_per_EM * tracking / 1000;
   }
-};
+}

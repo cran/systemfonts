@@ -2,6 +2,7 @@
 #define FTSHAPE_INCLUDED
 #include <vector>
 #include <string>
+#include <cstdint>
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include FT_TYPES_H
@@ -14,10 +15,49 @@ FreetypeCache& get_font_cache();
 
 class FreetypeShaper {
 public:
-  FreetypeShaper() {};
+  FreetypeShaper() :
+    width(0),
+    height(0),
+    left_bearing(0),
+    right_bearing(0),
+    top_bearing(0),
+    bottom_bearing(0),
+    top_border(0),
+    left_border(0),
+    pen_x(0),
+    pen_y(0),
+    error_code(0),
+    cur_lineheight(0.0),
+    cur_full_lineheight(0.0),
+    cur_align(0),
+    cur_string(0),
+    cur_hjust(0.0),
+    cur_vjust(0.0),
+    cur_res(0.0),
+    cur_line(0),
+    first_glyph(0),
+    kern(false),
+    firstline(true),
+    last_space(0),
+    last_nonspace_width(0),
+    last_nonspace_bear(0),
+    line_left_bear(),
+    line_right_bear(),
+    line_width(),
+    line_id(),
+    top(0),
+    bottom(0),
+    ascend(0),
+    descend(0),
+    max_width(0),
+    indent(0),
+    hanging(0),
+    space_before(0),
+    space_after(0)
+  {};
   ~FreetypeShaper() {};
   
-  static std::vector<u_int32_t> glyph_uc;
+  static std::vector<uint32_t> glyph_uc;
   static std::vector<unsigned int> glyph_id;
   static std::vector<unsigned int> string_id;
   static std::vector<long> x_pos;
@@ -80,7 +120,7 @@ private:
   long space_after;
   
   void reset();
-  bool shape_glyphs(u_int32_t* glyphs, int n_glyphs, FreetypeCache& cache, double tracking);
+  bool shape_glyphs(uint32_t* glyphs, int n_glyphs, FreetypeCache& cache, double tracking);
   
   inline bool glyph_is_linebreak(int id) {
     switch (id) {

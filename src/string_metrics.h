@@ -1,7 +1,8 @@
 #ifndef STRING_METRICS_INCLUDED
 #define STRING_METRICS_INCLUDED
 
-#include <R.h>
+#define R_NO_REMAP
+
 #include <Rinternals.h>
 
 SEXP get_string_shape(SEXP string, SEXP id, SEXP path, SEXP index, SEXP size, 

@@ -4,22 +4,17 @@
 #include <unordered_map>
 #include <string>
 #include <vector>
+#include <cstdint>
 #include <utility>
 
-#if defined(_WIN32)
-#include <stdint.h>
-typedef uint8_t u_int8_t;
-typedef uint16_t u_int16_t;
-typedef uint32_t u_int32_t;
-#endif
+#define R_NO_REMAP
 
-#include <R.h>
 #include <Rinternals.h>
 
 typedef std::pair<std::string, unsigned int> FontLoc;
 typedef std::vector<FontLoc> FontCollection;
 typedef std::unordered_map<std::string, FontCollection> FontReg;
-typedef std::unordered_map<u_int32_t, u_int8_t> EmojiMap;
+typedef std::unordered_map<uint32_t, uint8_t> EmojiMap;
 
 typedef std::tuple<std::string, int, int> FontKey;
 struct key_hash : public std::unary_function<FontKey, std::size_t> {
