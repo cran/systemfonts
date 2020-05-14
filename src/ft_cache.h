@@ -63,6 +63,7 @@ public:
   long cur_lineheight();
   long cur_ascender();
   long cur_descender();
+  bool get_kerning(uint32_t left, uint32_t right, long &x, long &y);
   bool apply_kerning(uint32_t left, uint32_t right, long &x, long &y);
   double tracking_diff(double tracking);
   int error_code;
@@ -70,7 +71,6 @@ public:
 private:
   FT_Library library;
   FTC_Manager manager;
-  FTC_CMapCache charmaps;
   std::map<uint32_t, GlyphInfo> glyphstore;
   std::map<uint32_t, GlyphInfo> unscaled_glyphstore;
   
