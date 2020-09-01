@@ -1,19 +1,31 @@
-#ifndef STRING_METRICS_INCLUDED
-#define STRING_METRICS_INCLUDED
+#pragma once
 
-#define R_NO_REMAP
+#include <cpp11/list.hpp>
+#include <cpp11/strings.hpp>
+#include <cpp11/integers.hpp>
+#include <cpp11/doubles.hpp>
+#include <cpp11/logicals.hpp>
 
-#include <Rinternals.h>
+[[cpp11::register]]
+cpp11::list get_string_shape_c(cpp11::strings string, cpp11::integers id, 
+                               cpp11::strings path, cpp11::integers index, 
+                               cpp11::doubles size, cpp11::doubles res, 
+                               cpp11::doubles lineheight, cpp11::integers align, 
+                               cpp11::doubles hjust, cpp11::doubles vjust, 
+                               cpp11::doubles width, cpp11::doubles tracking, 
+                               cpp11::doubles indent, cpp11::doubles hanging, 
+                               cpp11::doubles space_before, cpp11::doubles space_after);
 
-SEXP get_string_shape(SEXP string, SEXP id, SEXP path, SEXP index, SEXP size, 
-                      SEXP res, SEXP lineheight, SEXP align, SEXP hjust, 
-                      SEXP vjust, SEXP width, SEXP tracking, SEXP indent, 
-                      SEXP hanging, SEXP space_before, SEXP space_after);
-SEXP get_line_width(SEXP string, SEXP path, SEXP index, SEXP size, SEXP res, 
-                    SEXP include_bearing);
+[[cpp11::register]]
+cpp11::doubles get_line_width_c(cpp11::strings string, cpp11::strings path, 
+                                cpp11::integers index, cpp11::doubles size, 
+                                cpp11::doubles res, cpp11::logicals include_bearing);
+
 int string_width(const char* string, const char* fontfile, int index, 
                  double size, double res, int include_bearing, double* width);
+
 int string_shape(const char* string, const char* fontfile, int index, 
                  double size, double res, double* x, double* y, unsigned int max_length);
 
-#endif
+[[cpp11::init]]
+void export_string_metrics(DllInfo* dll);

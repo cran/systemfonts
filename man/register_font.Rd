@@ -6,7 +6,14 @@
 \alias{clear_registry}
 \title{Register font collections as families}
 \usage{
-register_font(name, plain, bold = plain, italic = plain, bolditalic = plain)
+register_font(
+  name,
+  plain,
+  bold = plain,
+  italic = plain,
+  bolditalic = plain,
+  features = font_feature()
+)
 
 registry_fonts()
 
@@ -19,6 +26,9 @@ clear_registry()
 collection. can either be a filepath or a list containing a filepath and an
 index (only for font files containing multiple fonts). If not given it will
 default to the \code{plain} specification.}
+
+\item{features}{A \code{\link{font_feature}} object describing the specific OpenType
+font features to turn on for the registered font.}
 }
 \value{
 \code{register_font()} and \code{clear_registry()} returns \code{NULL} invisibly.

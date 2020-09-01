@@ -1,5 +1,7 @@
 #include "ft_cache.h"
-#include "systemfonts.h"
+
+#include <cstdint>
+#include <cpp11/protect.hpp>
 
 FreetypeCache::FreetypeCache() 
   : error_code(0),
@@ -14,7 +16,7 @@ FreetypeCache::FreetypeCache()
   {
   FT_Error err = FT_Init_FreeType(&library);
   if (err != 0) {
-    Rf_error("systemfonts failed to initialise the freetype font cache");
+    cpp11::stop("systemfonts failed to initialise the freetype font cache");
   }
 }
 FreetypeCache::~FreetypeCache() {
@@ -284,4 +286,9 @@ bool FreetypeCache::apply_kerning(uint32_t left, uint32_t right, long &x, long &
 
 double FreetypeCache::tracking_diff(double tracking) {
   return (double) FT_MulFix(face->units_per_EM, size->metrics.x_scale) * tracking / 1000;
+}
+
+FT_Face FreetypeCache::get_face() {
+  FT_Reference_Face(face);
+  return face;
 }
