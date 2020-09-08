@@ -1,7 +1,7 @@
-b1cd296321d0585b703867e24ada3e4f *DESCRIPTION
+051009fb9fbc0b760e035a9d08bb3ae8 *DESCRIPTION
 c31ee18d335f7158ed985f5939319c1f *LICENSE
 a67a085cf05f2bac1fe05543659e289f *NAMESPACE
-2f960ee00ee46a430fe3fdbd90f5423d *NEWS.md
+88cdc266877b4846782ac156426e84bd *NEWS.md
 3e9b0a32dc3c81e8f54b90c86e8de3fe *R/cpp11.R
 74786ff5d1f5dde3454d17d8a2de1ccb *R/dev_strings.R
 66d9e75c427bf2b9d93f6bb0d98699d3 *R/emoji.R
@@ -47,7 +47,7 @@ a2c2da6400632a7bc5fdfd14d73b6a8c *src/cache_store.cpp
 464e2b8b3edea2b3aebcd9be387903b9 *src/cache_store.h
 eb738b720db4c5c4f9cf1a200df1ac4b *src/caches.cpp
 d2caa217cc934ed27d055fd9ed168d85 *src/caches.h
-faa693cfd095a58011f4edd11c238fa2 *src/cpp11.cpp
+e25a856cd48250c52a35a32305ade097 *src/cpp11.cpp
 8e340c25049f84658747dc1ec0f0fd18 *src/dev_metrics.cpp
 689e955be1d6b4baf0c9a0811ae3b9aa *src/dev_metrics.h
 d27cc9bd8b5824e0c04affa5092cc70b *src/emoji.cpp
@@ -56,7 +56,7 @@ bf301eb3be6c5637c8b2393414208290 *src/emoji.h
 b981ef765aa93e157d4fe1c8087e3b64 *src/font_matching.h
 e476227c4808b97b216ffcad18f666d3 *src/font_metrics.cpp
 5edaf4fbdd1cd378e3c00557ae36b530 *src/font_metrics.h
-483de52c9780f6be6175396a0d708264 *src/font_registry.cpp
+b4fdb641afd2d854a6266e283c4ce030 *src/font_registry.cpp
 8b56ef67884fa3b41f6205d30e8afcdd *src/font_registry.h
 b5638ac4bf8b3d338eb40efc0f175325 *src/ft_cache.cpp
 39fc8c878ef3176078ecaf1a9c766085 *src/ft_cache.h
