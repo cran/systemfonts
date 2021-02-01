@@ -48,6 +48,28 @@ bool FreetypeCache::load_font(const char* file, int index, double size, double r
   return true;
 }
 
+bool FreetypeCache::load_font(const char* file, int index) {
+  std::string file_str(file);
+  FaceID id(file_str, index);
+  
+  if (id == cur_id) {
+    return true;
+  }
+  
+  if (!load_face(id)) {
+    return false;
+  }
+  
+  cur_id = id;
+  cur_size = -1;
+  cur_res = -1;
+  glyphstore.clear();
+  
+  cur_can_kern = FT_HAS_KERNING(face);
+  
+  return true;
+}
+
 bool FreetypeCache::load_face(FaceID face) {
   if (face == cur_id) {
     return true;
@@ -56,6 +78,7 @@ bool FreetypeCache::load_face(FaceID face) {
   FaceStore cached_face;
   if (face_cache.get(face, cached_face)) {
     this->face = cached_face.face;
+    cur_is_scalable = FT_IS_SCALABLE(this->face);
     return true;
   }
   FT_Face new_face;
@@ -91,23 +114,27 @@ bool FreetypeCache::load_size(FaceID face, double size, double res) {
     error_code = err;
     return false;
   }
+  FT_Size old_size = this->face->size;
   FT_Activate_Size(new_size);
   
   if (cur_is_scalable) {
     err = FT_Set_Char_Size(this->face, 0, size * 64, res, res);
     if (err != 0) {
       error_code = err;
+      FT_Activate_Size(old_size);
       return false;
     }
   } else {
     if (this->face->num_fixed_sizes == 0) {
       error_code = 23;
+      FT_Activate_Size(old_size);
       return false;
     }
     int best_match = 0;
     int diff = 1e6;
+    int scaled_size = 64 * size * res / 72;
     for (int i = 0; i < this->face->num_fixed_sizes; ++i) {
-      int ndiff = this->face->available_sizes[i].height - size * res / 72;
+      int ndiff = this->face->available_sizes[i].size - scaled_size;
       if (ndiff >= 0 && ndiff < diff) {
         best_match = i;
         diff = ndiff;
@@ -117,6 +144,7 @@ bool FreetypeCache::load_size(FaceID face, double size, double res) {
     err = FT_Select_Size(this->face, best_match);
     if (err != 0) {
       error_code = err;
+      FT_Activate_Size(old_size);
       return false;
     }
     unscaled_scaling = 1;
@@ -289,6 +317,37 @@ double FreetypeCache::tracking_diff(double tracking) {
 }
 
 FT_Face FreetypeCache::get_face() {
-  FT_Reference_Face(face);
+  //FT_Reference_Face(face);
   return face;
+}
+
+std::string FreetypeCache::cur_name() {
+  const char* ps_name = FT_Get_Postscript_Name(face);
+  if (ps_name == NULL) {
+    const char* f_name = face->family_name;
+    if (f_name == NULL) f_name = "";
+    return {f_name};
+  }
+  return {ps_name};
+}
+
+int FreetypeCache::get_weight() {
+  void* table = FT_Get_Sfnt_Table(face, FT_SFNT_OS2);
+  if (table == NULL) {
+    return 0;
+  }
+  TT_OS2* os2_table = (TT_OS2*) table;
+  return os2_table->usWeightClass;
+}
+
+int FreetypeCache::get_width() {
+  void* table = FT_Get_Sfnt_Table(face, FT_SFNT_OS2);
+  if (table == NULL) {
+    return 0;
+  }
+  TT_OS2* os2_table = (TT_OS2*) table;
+  return os2_table->usWidthClass;
+}
+void FreetypeCache::get_family_name(char* family, int max_length) {
+  strncpy(family, face->family_name, max_length);
 }
