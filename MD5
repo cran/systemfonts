@@ -1,7 +1,7 @@
-2f6db818397a912826a203ea7fe756a6 *DESCRIPTION
+67c06dea913cf2d3471e6350ace7a2aa *DESCRIPTION
 c31ee18d335f7158ed985f5939319c1f *LICENSE
 a80dfddcb725c83d6fa1d3923d5f04a6 *NAMESPACE
-5f117f45ad39a7b8baa48ddc91b56446 *NEWS.md
+404ae803c949e0bc9ec4e91e2db12a19 *NEWS.md
 cd61167c17c91dc81ddf22d09fc61f45 *R/cpp11.R
 74786ff5d1f5dde3454d17d8a2de1ccb *R/dev_strings.R
 66d9e75c427bf2b9d93f6bb0d98699d3 *R/emoji.R
@@ -21,7 +21,7 @@ bc7baead3b6080f04dc81efd2fe1ff39 *cleanup
 eb5e3ad1d720950f3003206427453db4 *configure
 cfe5eded1693d8ac61eb889b0f172855 *inst/doc/c_interface.R
 ff709403f071158d8ee8d30650dc5057 *inst/doc/c_interface.Rmd
-df8355ed3ea20e8721f36719fc00395d *inst/doc/c_interface.html
+efc32f8d35d2cfcacc4ef4fba83ec6b6 *inst/doc/c_interface.html
 e3514da4b456dfdddebe8f5489c01b62 *inst/include/systemfonts-ft.h
 0643788c68978755c6c62c187517c6c5 *inst/include/systemfonts.h
 a11ff11ac7db5df57660f50d65378bf2 *inst/unfont.ttf
@@ -65,7 +65,7 @@ b4fdb641afd2d854a6266e283c4ce030 *src/font_registry.cpp
 22b33b882ce1c5575e19913310a8fb9c *src/ft_cache.cpp
 77d890efe3c5705fd72104c0e89dd0bf *src/ft_cache.h
 cf5c2dd2dcccb5d26dcbe464e60136d9 *src/init.cpp
-c46bc81083e7e4dcba31b72c5f0a71f3 *src/mac/FontManagerMac.mm
+a14e85b8afdaf681b19ac4fc2ec026c7 *src/mac/FontManagerMac.mm
 b3bedef5c2657632a2d7c4c0e6be898c *src/string_metrics.cpp
 e2a636534334f3ce1bf42187f2055476 *src/string_metrics.h
 97c13bfe96a94b47d053f72516c0b2c1 *src/string_shape.cpp
@@ -74,7 +74,7 @@ e2a636534334f3ce1bf42187f2055476 *src/string_metrics.h
 a11244add4eab85323501c1f3bee1a8d *src/unix/FontManagerLinux.cpp
 d6de2d619c1a22a5fc700fe05d32c6b3 *src/utils.h
 882d23bb7c881e87eb82a0de7952d0da *src/win/DirectWriteFontManagerWindows.cpp
-215feee44c1bb3d2b8b4ac39bf63d736 *src/win/FontManagerWindows.cpp
+e39debd3f8a5c489dd0b1071a39f947d *src/win/FontManagerWindows.cpp
 2b7eaaf1f6572e72dde8052c8c14412a *tests/testthat.R
 67874f8c9e8d68433167033af2a26c34 *tests/testthat/test-match_font.R
 928495dc1e966e04e0c4fc7c89e56056 *tests/testthat/test-system_fonts.R
