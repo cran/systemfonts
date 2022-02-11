@@ -1,8 +1,8 @@
-592840efc518a8953e82b5a0c546b94a *DESCRIPTION
+a970b9f73ad491a898aa96359d604980 *DESCRIPTION
 c31ee18d335f7158ed985f5939319c1f *LICENSE
 a80dfddcb725c83d6fa1d3923d5f04a6 *NAMESPACE
-5b2cb748898f1b9dda821f04d4392651 *NEWS.md
-cd61167c17c91dc81ddf22d09fc61f45 *R/cpp11.R
+f760f0155695e5fdbef18bf8352fb183 *NEWS.md
+7d0092b74385ec0ffe07694f41d7a805 *R/cpp11.R
 74786ff5d1f5dde3454d17d8a2de1ccb *R/dev_strings.R
 66d9e75c427bf2b9d93f6bb0d98699d3 *R/emoji.R
 5053fb4f83f7e4f94463dea449be7450 *R/font_fallback.R
@@ -15,10 +15,10 @@ d7f3fc65c934ef1e8f790c7c3b2a60af *R/shape_string.R
 165dfbd7c92ee330d2db50741351cbd8 *R/system_fonts.R
 c37f3cd43d3c984f5296a4e7d4805eb0 *R/systemfonts-package.R
 570a35188f80282e2dcf272d7e6cc985 *R/zzz.R
-f41f584e1305fd07d132e11b3070934b *README.md
-f02004d424e5bfc527ec12c6d91ebdac *build/vignette.rds
+0f4c77b50576fe87188e4315a5310260 *README.md
+d80f55f3e0e8db48ad755b47277fcb3c *build/vignette.rds
 bc7baead3b6080f04dc81efd2fe1ff39 *cleanup
-cc0961673fef1ea35ca9f158ce40f2b6 *configure
+52b84dc885a7ea17a0fd068324d775a5 *configure
 cfe5eded1693d8ac61eb889b0f172855 *inst/doc/c_interface.R
 ff709403f071158d8ee8d30650dc5057 *inst/doc/c_interface.Rmd
 2592fad53efdbfebde4f4b9991a5cfaf *inst/doc/c_interface.html
@@ -40,7 +40,7 @@ bcdb383fbedf598c6a0bc9060185d30b *man/shape_string.Rd
 0eecd59cfa105df9a1bd479cdda2e523 *man/string_width.Rd
 c72ad2a644aa183945b66164aee58ec6 *man/string_widths_dev.Rd
 8c3dc7bc1e63c3195611e49364bea5da *man/system_fonts.Rd
-83411b54cb8ad1341286dea39c1decb2 *man/systemfonts-package.Rd
+ca953f6fababbad60507592443b6b011 *man/systemfonts-package.Rd
 7236e24bab89c4c730c18cc6f2b3416a *src/FontDescriptor.h
 14634167b6c1d5c27e1e22412a7f7831 *src/Makevars.in
 75bf15e59a0eb5e5cb133640857cb35c *src/Makevars.ucrt
@@ -50,7 +50,7 @@ a2c2da6400632a7bc5fdfd14d73b6a8c *src/cache_store.cpp
 69b85b17e10134f34f962d12c6bb9f5e *src/cache_store.h
 b9b716df5de987ffda3523f5254f887f *src/caches.cpp
 370ae88cc338f925b3e8ec399c0f0b65 *src/caches.h
-a6c151cd71da94ca7ac25995bddd9930 *src/cpp11.cpp
+d1a4598c05a7ef718043b968c3d53f3c *src/cpp11.cpp
 8e340c25049f84658747dc1ec0f0fd18 *src/dev_metrics.cpp
 689e955be1d6b4baf0c9a0811ae3b9aa *src/dev_metrics.h
 04b170936547e799a6875fda13577cb5 *src/emoji.cpp
@@ -75,7 +75,7 @@ e2a636534334f3ce1bf42187f2055476 *src/string_metrics.h
 a11244add4eab85323501c1f3bee1a8d *src/unix/FontManagerLinux.cpp
 d6de2d619c1a22a5fc700fe05d32c6b3 *src/utils.h
 882d23bb7c881e87eb82a0de7952d0da *src/win/DirectWriteFontManagerWindows.cpp
-e39debd3f8a5c489dd0b1071a39f947d *src/win/FontManagerWindows.cpp
+985d9d7ea74875a87ca2d329e23aca90 *src/win/FontManagerWindows.cpp
 2b7eaaf1f6572e72dde8052c8c14412a *tests/testthat.R
 67874f8c9e8d68433167033af2a26c34 *tests/testthat/test-match_font.R
 928495dc1e966e04e0c4fc7c89e56056 *tests/testthat/test-system_fonts.R
