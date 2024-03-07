@@ -1,7 +1,7 @@
 Type: Package
 Package: systemfonts
 Title: System Native Font Finding
-Version: 1.0.5
+Version: 1.0.6
 Authors@R: c(
     person("Thomas Lin", "Pedersen", , "thomas.pedersen@posit.co", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-5147-4711")),
@@ -31,7 +31,7 @@ RoxygenNote: 7.1.2
 SystemRequirements: fontconfig, freetype2
 Config/Needs/website: tidyverse/tidytemplate
 NeedsCompilation: yes
-Packaged: 2023-10-09 08:28:00 UTC; thomas
+Packaged: 2024-03-07 08:43:59 UTC; thomas
 Author: Thomas Lin Pedersen [aut, cre]
     (<https://orcid.org/0000-0002-5147-4711>),
   Jeroen Ooms [aut] (<https://orcid.org/0000-0002-4035-0289>),
@@ -39,4 +39,4 @@ Author: Thomas Lin Pedersen [aut, cre]
   Posit, PBC [cph, fnd]
 Maintainer: Thomas Lin Pedersen <thomas.pedersen@posit.co>
 Repository: CRAN
-Date/Publication: 2023-10-09 14:00:09 UTC
+Date/Publication: 2024-03-07 09:10:02 UTC
