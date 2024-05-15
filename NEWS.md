@@ -1,3 +1,13 @@
+# systemfonts 1.1.0
+
+* `match_fonts()` have been added as a vectorized and generalized version of 
+  `match_font()`. In the process `match_font()` has been deprecated in favour of 
+  `match_fonts()`
+* Two internal functions for converting weight and width names to integers have
+  been exported
+* Fix a segfault on macOS when the system encounters a corrupted font collection 
+  (#113)
+
 # systemfonts 1.0.6
 
 * Fix a bug in `shape_string()` using `vjust = 1` (#85)

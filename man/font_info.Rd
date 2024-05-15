@@ -15,11 +15,11 @@ font_info(
 )
 }
 \arguments{
-\item{family}{The name of the font family}
+\item{family}{The name of the font families to match}
 
-\item{italic}{logicals indicating the font style}
+\item{italic}{logical indicating the font slant}
 
-\item{bold}{logicals indicating the font style}
+\item{bold}{logical indicating whether the font weight}
 
 \item{size}{The pointsize of the font to use for size related measures}
 
@@ -68,7 +68,7 @@ length of the longest argument.
 font_info('serif')
 
 # Avoid lookup if font file is already known
-sans <- match_font('sans')
+sans <- match_fonts('sans')
 font_info(path = sans$path, index = sans$index)
 
 }
