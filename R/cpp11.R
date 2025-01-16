@@ -20,6 +20,14 @@ get_fallback_c <- function(path, index, string) {
   .Call(`_systemfonts_get_fallback_c`, path, index, string)
 }
 
+add_local_fonts <- function(paths) {
+  .Call(`_systemfonts_add_local_fonts`, paths)
+}
+
+clear_local_fonts_c <- function() {
+  invisible(.Call(`_systemfonts_clear_local_fonts_c`))
+}
+
 match_font_c <- function(family, italic, bold) {
   .Call(`_systemfonts_match_font_c`, family, italic, bold)
 }
@@ -42,6 +50,14 @@ get_font_info_c <- function(path, index, size, res) {
 
 get_glyph_info_c <- function(glyphs, path, index, size, res) {
   .Call(`_systemfonts_get_glyph_info_c`, glyphs, path, index, size, res)
+}
+
+get_glyph_outlines <- function(glyph, path, index, size, tolerance, verbose) {
+  .Call(`_systemfonts_get_glyph_outlines`, glyph, path, index, size, tolerance, verbose)
+}
+
+get_glyph_bitmap <- function(glyph, path, index, size, res, color, verbose) {
+  .Call(`_systemfonts_get_glyph_bitmap`, glyph, path, index, size, res, color, verbose)
 }
 
 register_font_c <- function(family, paths, indices, features, settings) {
