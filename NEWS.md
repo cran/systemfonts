@@ -1,3 +1,11 @@
+# systemfonts 1.2.1
+
+* Fix a memory issue when adding new fonts with `add_fonts()`
+* Default to not downloading woff2 files from Google Fonts since it is poorly
+  supported on many systems
+* Fixed a bug in `get_from_font_squirrel()` where the font wasn't placed in the
+  user specified location
+
 # systemfonts 1.2.0
 
 * Providing the font name as the family should now result in better matching

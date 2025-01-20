@@ -1,7 +1,7 @@
-1e2187cc62b2c17f97bd9ff7b97f9fa8 *DESCRIPTION
+e97d8c3cc7f0dd0a352c4eaa7126bb53 *DESCRIPTION
 c31ee18d335f7158ed985f5939319c1f *LICENSE
 cac314ab717f9fb17616b36897ae51f7 *NAMESPACE
-c6100a5e46533412310087accad4d503 *NEWS.md
+090f26bf0df0fb32f195251b6a50a4e4 *NEWS.md
 709c6a25247c8310b8efb02e0cd58261 *R/cpp11.R
 74786ff5d1f5dde3454d17d8a2de1ccb *R/dev_strings.R
 f05e4863b9d51041c160b1533d185691 *R/emoji.R
@@ -10,12 +10,12 @@ f05e4863b9d51041c160b1533d185691 *R/emoji.R
 78c825e3b97fa9f9b3a898878dee225c *R/font_info.R
 4d764f77d401bd491cedabc1972cbfbc *R/font_outline.R
 292a8f9703cf273d4aa5c4a564649ad8 *R/match_fonts.R
-33d2f12807ade1c487304130e37e7598 *R/register_font.R
+436cabc78263b08ffd6ff87d13165b2e *R/register_font.R
 b4f920654381d72ea038be7a2d961ba3 *R/shape_string.R
 450a8e74d61467c86628109be3551119 *R/sysdata.rda
 357b9eefcdcaf5dccba0486039a0ac0c *R/system_fonts.R
 4006c34d424b9058b0e445202a5c0574 *R/systemfonts-package.R
-b799d7c1e5be928d43513f1dba2dafc9 *R/web_fonts.R
+19dc64e299e3a4e62f7f350e8212de07 *R/web_fonts.R
 456746e7e89f15addcd767443bc7c344 *R/zzz.R
 737c1cdf8dcba9b0c6166c952f2e70e0 *README.md
 c4f778f389c990af2640160fb3b7d626 *build/vignette.rds
@@ -59,8 +59,8 @@ e09f76c937bfdd66f63eb496f6680fc3 *man/glyph_outline.Rd
 c72ad2a644aa183945b66164aee58ec6 *man/string_widths_dev.Rd
 8c3dc7bc1e63c3195611e49364bea5da *man/system_fonts.Rd
 02abb9adb8993d574cdd9c0fe75335e7 *man/systemfonts-package.Rd
-42a36f13b29091d59e411c2aef19bc34 *man/web-fonts.Rd
-828c3b6587d6612b3e93aff897fc1856 *src/FontDescriptor.h
+78f2132e8d8317f8ece0660e8983f845 *man/web-fonts.Rd
+f2417364c9b5c1750566dc8108cdf044 *src/FontDescriptor.h
 9e130557dcc58b165a9322cd38213016 *src/Makevars.in
 16f5b4b0ad7d24d07ad422698f8ee636 *src/Makevars.win
 f21f62b8a7e300c356c8ac326552f0c2 *src/cache_lru.h
