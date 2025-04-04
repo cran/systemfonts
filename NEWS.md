@@ -1,3 +1,9 @@
+# systemfonts 1.2.2
+
+* Fix compilation on macOS when the obj-c++ compiler fails to pick up the right
+  obj-c++ version (#122)
+* `add_fonts()` now supports urls as well as file paths (#124)
+
 # systemfonts 1.2.1
 
 * Fix a memory issue when adding new fonts with `add_fonts()`

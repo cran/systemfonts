@@ -59,7 +59,7 @@
 #'
 register_font <- function(name, plain, bold = plain, italic = plain, bolditalic = plain, features = font_feature()) {
   if (name %in% system_fonts()$family) {
-    stop("A system font with that family name already exists", call. = FALSE)
+    stop("A system font called `", name, "` already exists", call. = FALSE)
   }
   if (is.character(plain)) plain <- list(plain, 0)
   if (is.character(bold)) bold <- list(bold, 0)
@@ -68,7 +68,7 @@ register_font <- function(name, plain, bold = plain, italic = plain, bolditalic 
   files <- c(plain[[1]], bold[[1]], italic[[1]], bolditalic[[1]])
   indices <- c(plain[[2]], bold[[2]], italic[[2]], bolditalic[[2]])
   if (!all(file.exists(files))) {
-    stop("reference to non-existing font file", call. = FALSE)
+    stop(name, " refers to non-existing font file(s)", call. = FALSE)
   }
 
   register_font_c(as.character(name), as.character(files), as.integer(indices), features[[1]], features[[2]])
@@ -184,7 +184,7 @@ register_variant <- function(name, family, weight = NULL, width = NULL, features
 #'
 #' @inheritSection match_fonts Font matching
 #'
-#' @param files A character vector of font file paths to add
+#' @param files A character vector of font file paths or urls to add
 #'
 #' @return This function is called for its sideeffects
 #'
@@ -201,6 +201,15 @@ register_variant <- function(name, family, weight = NULL, width = NULL, features
 add_fonts <- function(files) {
   if (!is.character(files)) {
     stop("`files` must be a character vector")
+  }
+  urls <- grepl("^https?://", files)
+  if (any(urls)) {
+    dest <- vapply(which(urls), function(i) tempfile(), character(1))
+    success <- utils::download.file(files[urls], dest, method = "libcurl")
+    if (success != 0) {
+      stop("Download of font files failed with the libcurl error ", success, call. = FALSE)
+    }
+    files[urls] <- dest
   }
   if (!all(file.exists(files))) {
     stop("all elements in `files` must be paths to existing files")
