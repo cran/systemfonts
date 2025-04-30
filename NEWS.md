@@ -1,3 +1,9 @@
+# systemfonts 1.2.3
+
+* Added `fonts_as_import()` to create stylesheet urls for embedding of fonts in
+  HTML and SVG
+* Added two C-level functions for getting glyph outline and bitmap information
+
 # systemfonts 1.2.2
 
 * Fix compilation on macOS when the obj-c++ compiler fails to pick up the right
