@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <fontconfig/fontconfig.h>
 #include "../FontDescriptor.h"
 
@@ -104,6 +105,7 @@ FontWidth convertWidth(int width) {
 FontDescriptor *createFontDescriptor(FcPattern *pattern) {
   FcChar8 *path = NULL, *psName = NULL, *family = NULL, *style = NULL;
   int index = 0, weight = 0, width = 0, slant = 0, spacing = 0;
+  FcBool variable = FcFalse;
 
   FcPatternGetString(pattern, FC_FILE, 0, &path);
 
@@ -121,6 +123,12 @@ FontDescriptor *createFontDescriptor(FcPattern *pattern) {
   FcPatternGetInteger(pattern, FC_SLANT, 0, &slant);
   FcPatternGetInteger(pattern, FC_SPACING, 0, &spacing);
 
+#ifdef FC_VARIABLE
+  FcPatternGetBool(pattern, FC_VARIABLE, 0, &variable);
+#endif
+
+  if (variable == FcTrue) index = 0;
+
   return new FontDescriptor(
     (char *) path,
     index,
@@ -130,7 +138,8 @@ FontDescriptor *createFontDescriptor(FcPattern *pattern) {
     convertWeight(weight),
     convertWidth(width),
     slant == FC_SLANT_ITALIC,
-    spacing == FC_MONO
+    spacing == FC_MONO,
+    variable == FcTrue
   );
 }
 
@@ -154,11 +163,22 @@ ResultSet *getAvailableFonts() {
   FcInit();
 
   FcPattern *pattern = FcPatternCreate();
+  FcObjectSet *os = FcObjectSetBuild(
+    FC_FILE,
 #ifdef FC_POSTSCRIPT_NAME
-  FcObjectSet *os = FcObjectSetBuild(FC_FILE, FC_POSTSCRIPT_NAME, FC_FAMILY, FC_STYLE, FC_WEIGHT, FC_WIDTH, FC_SLANT, FC_SPACING, NULL);
-#else
-  FcObjectSet *os = FcObjectSetBuild(FC_FILE, FC_FAMILY, FC_STYLE, FC_WEIGHT, FC_WIDTH, FC_SLANT, FC_SPACING, NULL);
+    FC_POSTSCRIPT_NAME,
 #endif
+    FC_FAMILY,
+    FC_STYLE,
+    FC_WEIGHT,
+    FC_WIDTH,
+    FC_SLANT,
+    FC_SPACING,
+#ifdef FC_VARIABLE
+    FC_VARIABLE,
+#endif
+    NULL
+  );
   FcFontSet *fs = FcFontList(NULL, pattern, os);
   ResultSet *res = getResultSet(fs);
 
@@ -203,11 +223,22 @@ FcPattern *createPattern(FontDescriptor *desc) {
 ResultSet *findFonts(FontDescriptor *desc) {
   FcPattern *pattern = createPattern(desc);
 
+  FcObjectSet *os = FcObjectSetBuild(
+    FC_FILE,
 #ifdef FC_POSTSCRIPT_NAME
-  FcObjectSet *os = FcObjectSetBuild(FC_FILE, FC_POSTSCRIPT_NAME, FC_FAMILY, FC_STYLE, FC_WEIGHT, FC_WIDTH, FC_SLANT, FC_SPACING, NULL);
-#else
-  FcObjectSet *os = FcObjectSetBuild(FC_FILE, FC_FAMILY, FC_STYLE, FC_WEIGHT, FC_WIDTH, FC_SLANT, FC_SPACING, NULL);
+    FC_POSTSCRIPT_NAME,
 #endif
+    FC_FAMILY,
+    FC_STYLE,
+    FC_WEIGHT,
+    FC_WIDTH,
+    FC_SLANT,
+    FC_SPACING,
+#ifdef FC_VARIABLE
+    FC_VARIABLE,
+#endif
+    NULL
+  );
 
   FcFontSet *fs = FcFontList(NULL, pattern, os);
   ResultSet *res = getResultSet(fs);
@@ -230,7 +261,7 @@ FontDescriptor *findFont(FontDescriptor *desc) {
 
   FcPatternDestroy(pattern);
   FcPatternDestroy(font);
-  
+
   // No match try using family as postscriptName
   if (res == NULL) {
     desc->postscriptName = desc->family;
@@ -238,10 +269,10 @@ FontDescriptor *findFont(FontDescriptor *desc) {
     pattern = createPattern(desc);
     FcConfigSubstitute(NULL, pattern, FcMatchPattern);
     FcDefaultSubstitute(pattern);
-    
+
     font = FcFontMatch(NULL, pattern, &result);
     res = font ? createFontDescriptor(font) : NULL;
-    
+
     FcPatternDestroy(pattern);
     FcPatternDestroy(font);
   }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cpp11/R.hpp>
+#include <R_ext/Rdynload.h>
 #include <cstdint>
 #include <vector>
 #include <string>
@@ -12,12 +14,14 @@
 #include FT_TYPES_H
 #include FT_SIZES_H
 #include FT_TRUETYPE_TABLES_H
+#include FT_MULTIPLE_MASTERS_H
 
 #ifdef __EMSCRIPTEN__
 #undef TYPEOF
 #endif
 
 #include "cache_lru.h"
+
 
 struct FaceID {
   std::string file;
@@ -72,9 +76,12 @@ struct FaceStore {
 struct FontInfo {
   std::string family;
   std::string style;
+  std::string name;
   bool is_italic;
   bool is_bold;
   bool is_monospace;
+  int weight;
+  int width;
   bool is_vertical;
   bool has_kerning;
   bool has_color;
@@ -82,6 +89,7 @@ struct FontInfo {
   int n_glyphs;
   int n_sizes;
   int n_charmaps;
+  std::vector<std::string> charmaps;
   std::vector<long> bbox;
   long max_ascend;
   long max_descend;
@@ -94,6 +102,7 @@ struct FontInfo {
 
 struct GlyphInfo {
   unsigned index;
+  std::string name;
   long x_bearing;
   long y_bearing;
   long width;
@@ -101,6 +110,14 @@ struct GlyphInfo {
   long x_advance;
   long y_advance;
   std::vector<long> bbox;
+};
+
+struct VariationInfo {
+  std::string name;
+  double min;
+  double max;
+  double def;
+  double set;
 };
 
 class FaceCache : public LRU_Cache<FaceID, FaceStore> {
@@ -166,14 +183,20 @@ public:
   long cur_lineheight();
   long cur_ascender();
   long cur_descender();
+  bool cur_is_variable();
   bool get_kerning(uint32_t left, uint32_t right, long &x, long &y);
   bool apply_kerning(uint32_t left, uint32_t right, long &x, long &y);
   double tracking_diff(double tracking);
   FT_Face get_face();
+  FT_Face get_referenced_face();
   int get_weight();
   int get_width();
   void get_family_name(char* family, int max_length);
   std::string cur_name();
+  std::vector<VariationInfo> cur_axes();
+  void has_axes(bool& weight, bool& width, bool& italic);
+  int n_axes();
+  void set_axes(const int* axes, const int* vals, size_t n);
   int error_code;
 
 private:
@@ -183,11 +206,13 @@ private:
   SizeCache size_cache;
 
   FaceID cur_id;
+  int cur_var;
   double cur_size;
   double cur_res;
   bool cur_can_kern;
   unsigned int cur_glyph;
   bool cur_is_scalable;
+  bool cur_has_variations;
   double unscaled_scaling;
 
   FT_Face face;
@@ -200,4 +225,13 @@ private:
     return size == cur_size && res == cur_res && id == cur_id;
   };
 
+  bool is_variable();
+
 };
+
+FreetypeCache& get_font_cache();
+
+[[cpp11::init]]
+void init_ft_caches(DllInfo* dll);
+
+void unload_ft_caches(DllInfo* dll);

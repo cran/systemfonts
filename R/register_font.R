@@ -68,10 +68,18 @@ register_font <- function(
   if (name %in% system_fonts()$family) {
     stop("A system font called `", name, "` already exists", call. = FALSE)
   }
-  if (is.character(plain)) plain <- list(plain, 0)
-  if (is.character(bold)) bold <- list(bold, 0)
-  if (is.character(italic)) italic <- list(italic, 0)
-  if (is.character(bolditalic)) bolditalic <- list(bolditalic, 0)
+  if (is.character(plain)) {
+    plain <- list(plain, 0)
+  }
+  if (is.character(bold)) {
+    bold <- list(bold, 0)
+  }
+  if (is.character(italic)) {
+    italic <- list(italic, 0)
+  }
+  if (is.character(bolditalic)) {
+    bolditalic <- list(bolditalic, 0)
+  }
   files <- c(plain[[1]], bold[[1]], italic[[1]], bolditalic[[1]])
   indices <- c(plain[[2]], bold[[2]], italic[[2]], bolditalic[[2]])
   if (!all(file.exists(files))) {
@@ -189,28 +197,41 @@ register_variant <- function(
     ,
     drop = FALSE
   ]
-  bold <- if (length(weight) == 2)
+  bold <- if (length(weight) == 2) {
     sys_fonts[
       which(sys_fonts$weight == weight[2] & !sys_fonts$italic),
       ,
       drop = FALSE
-    ] else plain
+    ]
+  } else {
+    plain
+  }
   italic <- sys_fonts[
     which(sys_fonts$weight == weight[1] & sys_fonts$italic),
     ,
     drop = FALSE
   ]
-  bolditalic <- if (length(weight) == 2)
+  bolditalic <- if (length(weight) == 2) {
     sys_fonts[
       which(sys_fonts$weight == weight[2] & sys_fonts$italic),
       ,
       drop = FALSE
-    ] else italic
-  if (nrow(plain) == 0) plain <- italic
-  if (nrow(bold) == 0) bold <- plain
-  if (nrow(italic) == 0) italic <- plain
-  if (nrow(bolditalic) == 0)
+    ]
+  } else {
+    italic
+  }
+  if (nrow(plain) == 0) {
+    plain <- italic
+  }
+  if (nrow(bold) == 0) {
+    bold <- plain
+  }
+  if (nrow(italic) == 0) {
+    italic <- plain
+  }
+  if (nrow(bolditalic) == 0) {
     bolditalic <- if (length(weight) == 2) bold else italic
+  }
   register_font(
     name,
     as.list(plain[1, c('path', 'index')]),
@@ -227,7 +248,7 @@ register_variant <- function(
 #' installed on the OS you are executing the code on. However, you may want to
 #' access fonts without doing a full installation, either because you want your
 #' project to be reproducible on all systems, because you don't have
-#' administrator priviliges on the system, or for a different reason entirely.
+#' administrator privileges on the system, or for a different reason entirely.
 #' `add_fonts()` provide a way to side load font files so that they are found
 #' during font matching. The function differs from [register_font()] and
 #' [register_variant()] in that they add the font file as-is using the family
@@ -268,11 +289,16 @@ add_fonts <- function(files) {
     }
     files[urls] <- dest
   }
-  if (!all(file.exists(files))) {
-    stop("all elements in `files` must be paths to existing files")
+  do_exist <- file.exists(files)
+  if (!all(do_exist)) {
+    warning(
+      "all elements in `files` must be paths to existing files. Ignoring ",
+      paste0(files[!do_exist], collapse = ", ")
+    )
+    files <- files[do_exist]
   }
   if (length(files) > 0) {
-    add_local_fonts(vapply(files, tools::file_path_as_absolute, character(1)))
+    add_local_fonts(vapply(files, normalizePath, character(1)))
   }
   invisible(NULL)
 }

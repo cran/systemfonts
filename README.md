@@ -1,17 +1,14 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# systemfonts
+# systemfonts <a href="https://systemfonts.r-lib.org"><img src="man/figures/logo.png" align="right" height="138" alt="systemfonts website" /></a>
 
 <!-- badges: start -->
 
-[![Codecov test
-coverage](https://codecov.io/gh/r-lib/systemfonts/branch/master/graph/badge.svg)](https://app.codecov.io/gh/r-lib/systemfonts?branch=master)
 [![CRAN
 status](https://www.r-pkg.org/badges/version/systemfonts)](https://cran.r-project.org/package=systemfonts)
 [![Lifecycle:
 stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html)
-[![R-CMD-check](https://github.com/r-lib/systemfonts/workflows/R-CMD-check/badge.svg)](https://github.com/r-lib/systemfonts/actions)
 [![R-CMD-check](https://github.com/r-lib/systemfonts/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/r-lib/systemfonts/actions/workflows/R-CMD-check.yaml)
 [![Codecov test
 coverage](https://codecov.io/gh/r-lib/systemfonts/graph/badge.svg)](https://app.codecov.io/gh/r-lib/systemfonts)
@@ -41,7 +38,7 @@ style:
 library(systemfonts)
 
 match_fonts('Avenir', italic = TRUE)
-#>                               path index features
+#>                               path index features variations
 #> 1 /System/Library/Fonts/Avenir.ttc     1
 ```
 
@@ -52,20 +49,20 @@ It is also possible to get a data.frame of all available fonts:
 
 ``` r
 system_fonts()
-#> # A tibble: 916 × 9
-#>    path                   index name  family style weight width italic monospace
-#>    <chr>                  <int> <chr> <chr>  <chr> <ord>  <ord> <lgl>  <lgl>    
-#>  1 /Users/thomas/fonts/Q…     0 Quic… Quick… Dash  ultra… norm… FALSE  FALSE    
-#>  2 /Users/thomas/fonts/Q…     0 Quic… Quick… Bold  bold   norm… FALSE  FALSE    
-#>  3 /Users/thomas/fonts/Q…     0 Quic… Quick… Bold… bold   norm… TRUE   FALSE    
-#>  4 /Users/thomas/fonts/Q…     0 Quic… Quick… Ital… normal norm… TRUE   FALSE    
-#>  5 /Users/thomas/fonts/Q…     0 Quic… Quick… Light light  norm… FALSE  FALSE    
-#>  6 /Users/thomas/fonts/Q…     0 Quic… Quick… Ligh… light  norm… TRUE   FALSE    
-#>  7 /Users/thomas/fonts/Q…     0 Quic… Quick… Regu… normal norm… FALSE  FALSE    
-#>  8 /Users/thomas/fonts/R…     0 Rubi… Rubik… Regu… normal norm… FALSE  FALSE    
-#>  9 /System/Library/Fonts…     2 Rock… Rockw… Bold  bold   norm… FALSE  FALSE    
-#> 10 /Users/thomas/Library…     0 Open… Open … Ligh… normal norm… TRUE   FALSE    
-#> # ℹ 906 more rows
+#> # A tibble: 1,189 × 10
+#>    path          index name  family style weight width italic monospace variable
+#>    <chr>         <int> <chr> <chr>  <chr> <ord>  <ord> <lgl>  <lgl>     <lgl>   
+#>  1 /Users/thoma…     0 Exo2… Exo 2  Black heavy  norm… FALSE  FALSE     FALSE   
+#>  2 /Users/thoma…     0 Exo2… Exo 2  Blac… heavy  norm… TRUE   FALSE     FALSE   
+#>  3 /Users/thoma…     0 Exo2… Exo 2  Bold  bold   norm… FALSE  FALSE     FALSE   
+#>  4 /Users/thoma…     0 Exo2… Exo 2  Bold… bold   norm… TRUE   FALSE     FALSE   
+#>  5 /Users/thoma…     0 Exo2… Exo 2  Extr… ultra… norm… FALSE  FALSE     FALSE   
+#>  6 /Users/thoma…     0 Exo2… Exo 2  Extr… ultra… norm… TRUE   FALSE     FALSE   
+#>  7 /Users/thoma…     0 Exo2… Exo 2  Extr… light  norm… FALSE  FALSE     FALSE   
+#>  8 /Users/thoma…     0 Exo2… Exo 2  Extr… light  norm… TRUE   FALSE     FALSE   
+#>  9 /Users/thoma…     0 Exo2… Exo 2  Ital… normal norm… TRUE   FALSE     FALSE   
+#> 10 /Users/thoma…     0 Exo2… Exo 2  Light light  norm… FALSE  FALSE     FALSE   
+#> # ℹ 1,179 more rows
 ```
 
 Further, you can query additional information about fonts and specific

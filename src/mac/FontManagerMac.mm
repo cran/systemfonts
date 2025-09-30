@@ -5,20 +5,22 @@
 #include "../FontDescriptor.h"
 
 // converts a CoreText weight (-1 to +1) to a standard weight (100 to 900)
+// See https://chromium.googlesource.com/chromium/src/+/master/ui/gfx/platform_font_mac.mm
+// for conversion
 static int convertWeight(float weight) {
-  if (weight <= -0.8f)
+  if (weight <= -0.7f)
     return 100;
-  else if (weight <= -0.6f)
+  else if (weight <= -0.45f)
     return 200;
-  else if (weight <= -0.4f)
+  else if (weight <= -0.1f)
     return 300;
-  else if (weight <= 0.0f)
+  else if (weight <= 0.1f)
     return 400;
-  else if (weight <= 0.25f)
+  else if (weight <= 0.27f)
     return 500;
   else if (weight <= 0.35f)
     return 600;
-  else if (weight <= 0.4f)
+  else if (weight <= 0.5f)
     return 700;
   else if (weight <= 0.6f)
     return 800;
@@ -37,6 +39,11 @@ static int convertWidth(float unit) {
 
 void addFontIndex(FontDescriptor* font) { @autoreleasepool {
   static std::map<std::string, int> font_index;
+
+  if (font->variable) {
+    font->index = 0;
+    return;
+  }
 
   std::string font_name(font->postscriptName);
   int font_no;
@@ -87,6 +94,8 @@ FontDescriptor *createFontDescriptor(CTFontDescriptorRef descriptor) { @autorele
   NSNumber *symbolicTraitsVal = traits[(id)kCTFontSymbolicTrait];
   unsigned int symbolicTraits = [symbolicTraitsVal unsignedIntValue];
 
+  CFArrayRef variations = CTFontCopyVariationAxes(CTFontCreateWithFontDescriptor(descriptor, 0.0, NULL));
+
   FontDescriptor *res = new FontDescriptor(
     [[url path] UTF8String],
     [psName UTF8String],
@@ -95,7 +104,8 @@ FontDescriptor *createFontDescriptor(CTFontDescriptorRef descriptor) { @autorele
     weight,
     width,
     (symbolicTraits & kCTFontItalicTrait) != 0,
-    (symbolicTraits & kCTFontMonoSpaceTrait) != 0
+    (symbolicTraits & kCTFontMonoSpaceTrait) != 0,
+    variations != nullptr && CFArrayGetCount(variations) != 0
   );
   addFontIndex(res);
   return res;
@@ -181,15 +191,36 @@ int metricForMatch(CTFontDescriptorRef match, FontDescriptor *desc) { @autorelea
 
   bool italic = ([dict[(id)kCTFontSymbolicTrait] unsignedIntValue] & kCTFontItalicTrait);
 
+  // See if font has variations for certain traits. If so, ignore these in the metric
+  bool has_var_weight = false;
+  bool has_var_width = false;
+  bool has_var_italic = false;
+  CFArrayRef variations = CTFontCopyVariationAxes(CTFontCreateWithFontDescriptor(match, 0.0, NULL));
+  if (variations != nullptr) {
+    long weight_tag = 2003265652;
+    long width_tag = 2003072104;
+    long italic_tag = 1769234796;
+    long tag_val = 0;
+    for (CFIndex i = 0; i < CFArrayGetCount(variations); ++i) {
+      CFDictionaryRef axis = (CFDictionaryRef)CFArrayGetValueAtIndex(variations, i);
+      CFNumberRef tag = (CFNumberRef) CFDictionaryGetValue(axis, kCTFontVariationAxisIdentifierKey);
+      CFNumberGetValue(tag, kCFNumberLongType, &tag_val);
+      if (tag_val == weight_tag) has_var_weight = true;
+      else if (tag_val == width_tag) has_var_width = true;
+      else if (tag_val == italic_tag) has_var_italic = true;
+    }
+  }
+
   // normalize everything to base-900
   int metric = 0;
-  if (desc->weight)
+  if (!has_var_weight && desc->weight)
     metric += sqr(convertWeight([dict[(id)kCTFontWeightTrait] floatValue]) - desc->weight);
 
-  if (desc->width)
+  if (!has_var_width && desc->width)
     metric += sqr((convertWidth([dict[(id)kCTFontWidthTrait] floatValue]) - desc->width) * 100);
 
-  metric += sqr((italic != desc->italic) * 900);
+  if (!has_var_italic)
+    metric += sqr((italic != desc->italic) * 900);
 
   return metric;
 }}
@@ -289,7 +320,7 @@ FontDescriptor *substituteFont(char *postscriptName, char *string) { @autoreleas
 
   // finally, create and return a result object for this substitute font
   res = createFontDescriptor(substituteDescriptor);
-  
+
   CFRelease(descriptor);
   CFRelease(font);
   CFRelease(substituteFont);

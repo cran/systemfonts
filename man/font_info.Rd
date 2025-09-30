@@ -7,11 +7,14 @@
 font_info(
   family = "",
   italic = FALSE,
-  bold = FALSE,
+  weight = "normal",
+  width = "undefined",
   size = 12,
   res = 72,
   path = NULL,
-  index = 0
+  index = 0,
+  variation = font_variation(),
+  bold = deprecated()
 )
 }
 \arguments{
@@ -19,14 +22,29 @@ font_info(
 
 \item{italic}{logical indicating the font slant}
 
-\item{bold}{logical indicating whether the font weight}
+\item{weight}{The weight to query for, either in numbers (\code{0}, \code{100}, \code{200},
+\code{300}, \code{400}, \code{500}, \code{600}, \code{700}, \code{800}, or \code{900}) or strings (\code{"undefined"},
+\code{"thin"}, \code{"ultralight"}, \code{"light"}, \code{"normal"}, \code{"medium"}, \code{"semibold"},
+\code{"bold"}, \code{"ultrabold"}, or \code{"heavy"}). \code{NA} will be interpreted as
+\code{"undefined"}/\code{0}}
+
+\item{width}{The width to query for either in numbers (\code{0}, \code{1}, \code{2},
+\code{3}, \code{4}, \code{5}, \code{6}, \code{7}, \code{8}, or \code{9}) or strings (\code{"undefined"},
+\code{"ultracondensed"}, \code{"extracondensed"}, \code{"condensed"}, \code{"semicondensed"},
+\code{"normal"}, \code{"semiexpanded"}, \code{"expanded"}, \code{"extraexpanded"}, or
+\code{"ultraexpanded"}). \code{NA} will be interpreted as \code{"undefined"}/\code{0}}
 
 \item{size}{The pointsize of the font to use for size related measures}
 
-\item{res}{The ppi of the size related mesures}
+\item{res}{The ppi of the size related measures}
 
-\item{path, index}{path an index of a font file to circumvent lookup based on
+\item{path, index}{path and index of a font file to circumvent lookup based on
 family and style}
+
+\item{variation}{A \code{font_variation} object or a list of them to control
+variable fonts}
+
+\item{bold}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Use \code{weight = "bold"} instead}
 }
 \value{
 A data.frame giving info on the requested font + size combinations. The
@@ -37,6 +55,7 @@ data.frame will contain the following columns:
 \item{index}{The 0-based index of the font in the fontfile}
 \item{family}{The family name of the font}
 \item{style}{The style name of the font}
+\item{name}{The name of the font, if present, otherwise the family name}
 \item{italic}{A logical giving if the font is italic}
 \item{bold}{A logical giving if the font is bold}
 \item{monospace}{A logical giving if the font is monospace}

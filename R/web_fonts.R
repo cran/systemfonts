@@ -4,9 +4,10 @@
 #' looking for a font, in order to see examples etc, `search_web_fonts()`
 #' provide a quick lookup based on family name in the repositories supported by
 #' systemfonts (currently [Google Fonts](https://fonts.google.com) and
-#' [Font Squirrel](https://www.fontsquirrel.com)). The lookup is based on fuzzy
-#' matching provided by [utils::adist()] and the matching parameters can be
-#' controlled through `...`
+#' [Font Squirrel](https://www.fontsquirrel.com) - [Bunny Fonts](https://fonts.bunny.net/)
+#' provide the same fonts as Google Fonts but doesn't have a search API). The
+#' lookup is based on fuzzy matching provided by [utils::adist()] and the
+#' matching parameters can be controlled through `...`
 #'
 #' @param family The font family name to look for
 #' @param n_max The maximum number of matches to return
@@ -28,7 +29,7 @@ search_web_fonts <- function(family, n_max = 10, ...) {
   all <- data.frame(
     family = c(gf, fs),
     repository = c(rep(
-      c("Google Fonts", "Font Squirrel"),
+      c("Google Fonts/Bunny Fonts", "Font Squirrel"),
       c(length(gf), length(fs))
     ))
   )
@@ -81,9 +82,21 @@ get_from_google_fonts <- function(family, dir = "~/fonts", woff2 = FALSE) {
   success <- try(
     {
       if (capabilities("libcurl")) {
-        utils::download.file(files, download_name, method = "libcurl")
+        utils::download.file(
+          files,
+          download_name,
+          method = "libcurl",
+          quiet = TRUE,
+          mode = "wb"
+        )
       } else {
-        mapply(utils::download.file, url = files, destfile = download_name)
+        mapply(
+          utils::download.file,
+          url = files,
+          destfile = download_name,
+          quiet = TRUE,
+          mode = "wb"
+        )
       }
     },
     silent = TRUE
@@ -118,9 +131,19 @@ get_from_font_squirrel <- function(family, dir = "~/fonts") {
   success <- try(
     {
       if (capabilities("libcurl")) {
-        utils::download.file(files, download_name, method = "libcurl")
+        utils::download.file(
+          files,
+          download_name,
+          method = "libcurl",
+          quiet = TRUE
+        )
       } else {
-        mapply(utils::download.file, url = files, destfile = download_name)
+        mapply(
+          utils::download.file,
+          url = files,
+          destfile = download_name,
+          quiet = TRUE
+        )
       }
     },
     silent = TRUE
@@ -138,6 +161,48 @@ get_from_font_squirrel <- function(family, dir = "~/fonts") {
   is_font <- grepl("\\.(?:ttf|ttc|otf|otc|woff|woff2)$", tolower(new_fonts))
   unlink(new_fonts[!is_font])
   add_fonts(new_fonts[is_font])
+
+  return(invisible(TRUE))
+}
+get_from_font_library <- function(family, dir = "~/fonts") {
+  url <- import_from_font_library(family)
+  if (length(url) == 0) {
+    return(invisible(FALSE))
+  }
+  url <- readLines(url)
+  urls <- grep("url\\(.*?\\)", url, value = TRUE)
+  urls <- sub(".*url\\((.*?)\\).*", "\\1", urls)
+  urls <- paste0("https://fontlibrary.org", gsub("'|\"", "", urls))
+
+  if (!dir.exists(dir)) dir.create(dir, recursive = TRUE)
+
+  download_name <- file.path(dir, basename(urls))
+  success <- try(
+    {
+      if (capabilities("libcurl")) {
+        utils::download.file(
+          urls,
+          download_name,
+          method = "libcurl",
+          quiet = TRUE
+        )
+      } else {
+        mapply(
+          utils::download.file,
+          url = urls,
+          destfile = download_name,
+          quiet = TRUE
+        )
+      }
+    },
+    silent = TRUE
+  )
+
+  if (inherits(success, "try-error")) {
+    return(invisible(FALSE))
+  }
+
+  add_fonts(download_name)
 
   return(invisible(TRUE))
 }
@@ -159,8 +224,9 @@ get_from_font_squirrel <- function(family, dir = "~/fonts") {
 #' @param dir The location to put the font file downloaded from repositories
 #' @param repositories The repositories to search for the font in case it is not
 #' available on the system. They will be tried in the order given. Currently
-#' only `"Google Fonts"` and `"Font Squirrel"` is available.
+#' `"Google Fonts"`, `"Font Squirrel"`, and `"Font Library"` is available.
 #' @param error Should the function throw an error if unsuccessful?
+#' @param verbose Should status messages be emitted?
 #'
 #' @return Invisibly `TRUE` if the font is available or `FALSE` if not (this can
 #' only be returned if `error = FALSE`)
@@ -175,8 +241,9 @@ require_font <- function(
   family,
   fallback = NULL,
   dir = tempdir(),
-  repositories = c("Google Fonts", "Font Squirrel"),
-  error = TRUE
+  repositories = c("Google Fonts", "Font Squirrel", "Font Library"),
+  error = TRUE,
+  verbose = TRUE
 ) {
   if (tolower(family) %in% c("sans", "serif", "mono", "symbol"))
     return(invisible(TRUE))
@@ -188,16 +255,54 @@ require_font <- function(
   ) {
     stop("`family` must be a string")
   }
-  success <- tolower(font_info(family)$family) == tolower(family)
+  fonts <- system_fonts()
+  available <- which(tolower(fonts$family) == tolower(family))
 
-  for (repo in repositories) {
-    if (success) break
-    success <- switch(
-      tolower(repo),
-      "google fonts" = get_from_google_fonts(family, dir),
-      "font squirrel" = get_from_font_squirrel(family, dir),
-      FALSE
-    )
+  if (length(available) != 0) {
+    if (verbose) {
+      message(
+        "`",
+        family,
+        "` available at ",
+        paste0(unique(dirname(fonts$path[available])), collapse = ", ")
+      )
+    }
+    return(invisible(TRUE))
+  }
+
+  success <- FALSE
+
+  has_internet <- !inherits(
+    suppressWarnings(try(
+      readLines("https://8.8.8.8", n = 1L),
+      silent = TRUE
+    )),
+    "try-error"
+  )
+
+  if (!has_internet) {
+    if (verbose) {
+      message("No internet connection. Can't search online repositories")
+    }
+  } else {
+    for (repo in repositories) {
+      if (verbose) message("Trying ", repo, "...", appendLF = FALSE)
+      success <- switch(
+        tolower(repo),
+        "google fonts" = get_from_google_fonts(family, dir),
+        "font squirrel" = get_from_font_squirrel(family, dir),
+        "font library" = get_from_font_library(family, dir),
+        FALSE
+      )
+      if (verbose) {
+        if (success) {
+          message(" Found! Downloading font to ", dir)
+        } else {
+          message("Not found.")
+        }
+      }
+      if (success) break
+    }
   }
 
   if (!success) {
@@ -209,13 +314,13 @@ require_font <- function(
           ", is not available on the system"
         ))
     } else {
-      warning(paste0(
+      message(
         "Required font: `",
         family,
         "`, is not available on the system. Adding alias to `",
         fallback,
         "`"
-      ))
+      )
       register_variant(family, fallback)
       success <- TRUE
     }
@@ -231,14 +336,14 @@ require_font <- function(
 #' can be achieved through the use of stylesheets that can either be added with
 #' a `<link>` tag or inserted with an `@import` statement. This function
 #' facilitates the creation of either of these (or the bare URL to the
-#' stylesheet). It can rely on the Google Fonts or Font Library repository for
-#' serving the fonts. If the requested font is not found it can optionally hard
-#' code the data into the stylesheet.
+#' stylesheet). It can rely on the Bunny Fonts, Google Fonts and/or Font Library
+#' repositories for serving the fonts. If the requested font is not found it can
+#' optionally hard code the data into the stylesheet.
 #'
 #' @inheritParams match_fonts
 #' @param ... Additional arguments passed on to the specific functions for the
 #' repositories. Currently:
-#' * **Google Fonts:**
+#' * **Google Fonts and Bunny Fonts:**
 #'   - `text` A piece of text containing the glyphs required. Using this can
 #'     severely cut down on the size of the required download
 #'   - `display` One of `"auto"`, `"block"`, `"swap"`, `"fallback"`, or
@@ -252,8 +357,9 @@ require_font <- function(
 #' repositories be embedded as data-URLs. This is only possible if the font is
 #' available locally and in a `woff2`, `woff`, `otf`, or `ttf` file.
 #' @param repositories The repositories to try looking for the font. Currently
-#' `"Google Fonts"` and `"Font Library"` are supported. Set this to `NULL`
-#' together with `may_embed = TRUE` to force embedding of the font data.
+#' `"Bunny Fonts"`, `"Google Fonts"`, and `"Font Library"` are supported. Set
+#' this to `NULL` together with `may_embed = TRUE` to force embedding of the
+#' font data.
 #'
 #' @return A character vector with stylesheet specifications according to `type`
 #' @export
@@ -266,15 +372,24 @@ fonts_as_import <- function(
   ...,
   type = c("url", "import", "link"),
   may_embed = TRUE,
-  repositories = c("Google Fonts", "Font Library")
+  repositories = c("Bunny Fonts", "Google Fonts", "Font Library")
 ) {
   import <- character(0)
   type <- match.arg(type)
   if (may_embed) repositories <- c(repositories, "local")
 
+  all_families <- family
+
   for (repo in repositories) {
     fonts <- switch(
       tolower(repo),
+      "bunny fonts" = import_from_bunny_fonts(
+        family,
+        italic = italic,
+        weight = weight,
+        width = width,
+        ...
+      ),
       "google fonts" = import_from_google_fonts(
         family,
         italic = italic,
@@ -306,6 +421,18 @@ fonts_as_import <- function(
 
   if (length(family) != 0) {
     warning("No import found for ", paste(family, collapse = ", "))
+  }
+
+  imported <- unique(setdiff(all_families, family))
+  for (f in imported) {
+    success <- require_font(imported, error = FALSE, verbose = FALSE)
+    if (!success) {
+      warning(
+        "An import URL for ",
+        f,
+        " could be made but the font could not be made avialable on the system"
+      )
+    }
   }
 
   switch(
@@ -345,7 +472,7 @@ import_from_google_fonts <- function(
     fam <- paste0("family=", gsub(" ", "+", family[i[1]]))
 
     spec <- list()
-    spec$ital <- if (!is.null(italic)) unique(range(italic[i]))
+    spec$ital <- if (!is.null(italic)) as.character(unique(range(italic[i])))
     if (isTRUE(spec$ital == 0L)) spec$ital <- NULL
     spec$wdth <- if (!is.null(width))
       paste0(unique(range(width[i])), collapse = "..")
@@ -353,8 +480,18 @@ import_from_google_fonts <- function(
       paste0(unique(range(weight[i])), collapse = "..")
     spec <- spec[lengths(spec) != 0]
     if (length(spec) != 0) {
-      spec$sep <- ","
-      val <- paste0(do.call(paste0, spec), collapse = ";")
+      n_specs <- max(lengths(spec))
+      spec <- lapply(spec, rep_len, n_specs)
+      val <- paste0(
+        vapply(
+          seq_len(n_specs),
+          function(i) {
+            paste0(vapply(spec, `[[`, character(1), i), collapse = ",")
+          },
+          character(1)
+        ),
+        collapse = ";"
+      )
       spec <- paste0(names(spec), collapse = ",")
       fam <- paste0(fam, ":", spec, "@", val)
     }
@@ -384,6 +521,40 @@ import_from_google_fonts <- function(
     missing <- seq_along(family)
   }
   structure(url %||% character(), no_match = missing)
+}
+import_from_bunny_fonts <- function(
+  family,
+  italic = NULL,
+  weight = NULL,
+  width = NULL,
+  ...,
+  text = NULL,
+  display = "swap"
+) {
+  url <- import_from_google_fonts(
+    family = family,
+    italic = italic,
+    weight = weight,
+    width = width,
+    ...,
+    text = text,
+    display = display
+  )
+  success <- try(suppressWarnings(readLines(url, n = 1)), silent = TRUE)
+  if (
+    inherits(success, "try-error") || any(grepl("Error: API Error", success))
+  ) {
+    return(structure(character(), no_match = seq_along(family)))
+  }
+  structure(
+    sub(
+      "https://fonts.googleapis.com/css2?",
+      "https://fonts.bunny.net/css2?",
+      url,
+      fixed = TRUE
+    ),
+    no_match = attr(url, "no_match")
+  )
 }
 import_from_font_library <- function(family, ...) {
   family <- gsub(" ", "-", tolower(family))
@@ -448,7 +619,7 @@ import_embedded <- function(
     # fmt: skip
     x <- paste0(
       '@font-face {\n',
-      '  font-family: "', family[i], '";\n',
+      '  font-family: "', found$family, '";\n',
       '  src: ', src, ';\n',
       if (length(fonts$features[[i]]) != 0) paste0(
       '  font-feature-settings: ', features, ';\n'),
