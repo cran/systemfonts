@@ -1,7 +1,7 @@
-0a1fb2c37b656c571bcf79fbd88b284f *DESCRIPTION
+0d041569c1600ce7aa0c65b4565a0c29 *DESCRIPTION
 23a3718c6a01d1fb6750f38c780d4392 *LICENSE
 81d29530873396451ccb04ddcc9bd174 *NAMESPACE
-bff8501c640b9a892e2c237e6fd21e7d *NEWS.md
+f3d313dc2ab66dceffd6af5d95d89425 *NEWS.md
 90b2de409e2be11318813df291175b64 *R/cpp11.R
 3d751ceb3d0ccb2c4bf4b595647ca3d1 *R/dev_strings.R
 86a1b5487f167368176c09ca0f387866 *R/emoji.R
@@ -9,9 +9,9 @@ bff8501c640b9a892e2c237e6fd21e7d *NEWS.md
 6d63f44a05bc1e3390f951f2214de4dc *R/font_feature.R
 a9655b46a18326b5bb4f9835dc155662 *R/font_info.R
 7706931a0b4ba4df27b80c9a7dd88128 *R/font_outline.R
-8af7248c0d794e33c483b5a37120d669 *R/font_variation.R
+ddd1d5a8dba7ddf57dd5d60b56ea5d33 *R/font_variation.R
 da2e0eb0a7122ab5a066057580e6bf32 *R/match_fonts.R
-330fd713dbf28182861689f04c5bf5c0 *R/register_font.R
+8c242b729a732f0d12874fd73c88649c *R/register_font.R
 2508e69b1e701c0113914fa1e781711a *R/shape_string.R
 450a8e74d61467c86628109be3551119 *R/sysdata.rda
 7e0372949007f70646c13aae6a9256e2 *R/system_fonts.R
@@ -28,9 +28,9 @@ abb78422cd255d6b1848a6e8d408dffe *inst/doc/c_interface.Rmd
 1635454cac6ee9540af4321b085c79b4 *inst/doc/fonts_basics.R
 7c252522c509fd19b4c24e8763327f05 *inst/doc/fonts_basics.Rmd
 38eba25b89988ab30d65d928361a0629 *inst/doc/fonts_basics.html
-08dc93fa7cdfe0c6967a5b01df8d6e96 *inst/doc/systemfonts.R
-83d0eecb2e8238fcc2de9fba45f81de5 *inst/doc/systemfonts.Rmd
-78f8e3ed738f68785bfb44378dfa3cb6 *inst/doc/systemfonts.html
+96c2431902d0e2dacd2715868d84f3ad *inst/doc/systemfonts.R
+20bd907260f72d905c71e2c6a3967849 *inst/doc/systemfonts.Rmd
+7e6577954dce435793ac8ea7ef639ff4 *inst/doc/systemfonts.html
 80363776c5ae11fe7d6a4e4fa4d7d644 *inst/include/systemfonts-ft.h
 de08d3112a9dda86aa234ff89ce7ac03 *inst/include/systemfonts.h
 a11ff11ac7db5df57660f50d65378bf2 *inst/unfont.ttf
@@ -58,7 +58,7 @@ c6479196411422bbfea6830b49ce0a6b *man/glyph_info.Rd
 2c7d4769d94f80d5a5a83839ecce4c84 *man/glyph_raster_grob.Rd
 74a37354f73dd54adbdf806db5b67df4 *man/match_fonts.Rd
 21947119d04623d09bf9b0bcb7825276 *man/plot_glyph_stats.Rd
-23fd7c8f59004ee2edb6fc597c67476c *man/register_font.Rd
+dd810c906dc7c6b29adbdf3f0320aaa3 *man/register_font.Rd
 4abcf3f2e11548211e3481819704da30 *man/register_variant.Rd
 5617f7de52e8df4d76a34a7b845fb665 *man/require_font.Rd
 410487ad9c7fce4f2351ebf1569f6e2b *man/reset_font_cache.Rd
@@ -90,7 +90,7 @@ b4807fa18976a4d3ddbdd56ae393aef7 *src/font_fallback.cpp
 9b94ae92d464a14a982428d925de2328 *src/font_local.h
 f781c55ebe328100c02745c23d4a483e *src/font_matching.cpp
 06f4e160ebc99bdb456f34171fa923b0 *src/font_matching.h
-434662817f47026d12ba7d82df39fc68 *src/font_metrics.cpp
+fc98aa27f56e8da0c888d1c9e2556f9d *src/font_metrics.cpp
 b423c45ecc7d443840f3c7f802adf89d *src/font_metrics.h
 9fb2310fb9798b6353f653ea209c75d8 *src/font_outlines.cpp
 f090ad50f988f413bcfd2ab087417593 *src/font_outlines.h
@@ -98,8 +98,8 @@ f090ad50f988f413bcfd2ab087417593 *src/font_outlines.h
 8b56ef67884fa3b41f6205d30e8afcdd *src/font_registry.h
 035c48ebc3b79818e98920a747f12d92 *src/font_variation.cpp
 7a638fc081cc538f703af5c8be05f209 *src/font_variation.h
-b77ba5a37d75a466ee430d6ad6ab5f7f *src/ft_cache.cpp
-7f9496b2ab76dcdca097393d1c5c82a6 *src/ft_cache.h
+b38350fa2e6fb2b79060bcd539ba2b5d *src/ft_cache.cpp
+80d1ac62bfc5faebf5a68e365d7ed6b2 *src/ft_cache.h
 6c1d002cfbd08c190f4119331fd407f1 *src/init.cpp
 4e4e05775106d005c23ec7863904661a *src/mac/FontManagerMac.mm
 b3bedef5c2657632a2d7c4c0e6be898c *src/string_metrics.cpp
@@ -108,7 +108,7 @@ e2a636534334f3ce1bf42187f2055476 *src/string_metrics.h
 8feb4ff7fa00b41bdb430718e9cddaf3 *src/string_shape.h
 4a7d508826eeb5f6f29cc58dbdd720be *src/types.h
 49e2ef4d914afaa955f1935bb4d6112f *src/unix/FontManagerLinux.cpp
-e7f8b49e47c61fc46ac9265267270b0e *src/utils.h
+dcf3f72467c9e1a71b86ff9384e0397f *src/utils.h
 882d23bb7c881e87eb82a0de7952d0da *src/win/DirectWriteFontManagerWindows.cpp
 5611ed971c89b566695be7fb3e774fb2 *src/win/FontManagerWindows.cpp
 2b7eaaf1f6572e72dde8052c8c14412a *tests/testthat.R
@@ -117,5 +117,5 @@ e7f8b49e47c61fc46ac9265267270b0e *src/utils.h
 50216300566a3d9d1468aa834640cd58 *tools/winlibs.R
 abb78422cd255d6b1848a6e8d408dffe *vignettes/c_interface.Rmd
 7c252522c509fd19b4c24e8763327f05 *vignettes/fonts_basics.Rmd
-83d0eecb2e8238fcc2de9fba45f81de5 *vignettes/systemfonts.Rmd
+20bd907260f72d905c71e2c6a3967849 *vignettes/systemfonts.Rmd
 7177bbbcbc637696e8ec14c9e4f5dcb0 *vignettes/text_call_flow.svg

@@ -67,8 +67,15 @@ grid::grid.text(
 )
 
 ## -----------------------------------------------------------------------------
-systemfonts::get_from_google_fonts("Barrio")
+# systemfonts::get_from_google_fonts("Barrio")
+# 
+# grid::grid.text(
+#   "A new font a day keeps Tufte away",
+#   gp = grid::gpar(fontfamily = "Barrio", fontsize = 30)
+# )
 
+## -----------------------------------------------------------------------------
+systemfonts::require_font("Barrio")
 grid::grid.text(
   "A new font a day keeps Tufte away",
   gp = grid::gpar(fontfamily = "Barrio", fontsize = 30)
