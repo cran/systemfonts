@@ -4,7 +4,7 @@
 #' looking for a font, in order to see examples etc, `search_web_fonts()`
 #' provide a quick lookup based on family name in the repositories supported by
 #' systemfonts (currently [Google Fonts](https://fonts.google.com) and
-#' [Font Squirrel](https://www.fontsquirrel.com) - [Bunny Fonts](https://fonts.bunny.net/)
+#' [Font Squirrel](https://fontsquirrel.com) - [Bunny Fonts](https://fonts.bunny.net/)
 #' provide the same fonts as Google Fonts but doesn't have a search API). The
 #' lookup is based on fuzzy matching provided by [utils::adist()] and the
 #' matching parameters can be controlled through `...`
@@ -454,11 +454,11 @@ import_from_google_fonts <- function(
 ) {
   n_fonts <- max(length(family), length(italic), length(weight), length(width))
   family <- rep_len(family, n_fonts)
-  if (!is.null(italic)) italic <- rep_len(as.integer(italic), n_fonts)
+  if (!is.null(italic)) italic <- rep_len_default(as.integer(italic), n_fonts, 0L)
   if (!is.null(weight))
-    weight <- rep_len(systemfonts::as_font_weight(weight), n_fonts)
+    weight <- rep_len_default(systemfonts::as_font_weight(weight), n_fonts, 400)
   if (!is.null(width))
-    width <- rep_len(systemfonts::as_font_width(width), n_fonts)
+    width <- rep_len_default(systemfonts::as_font_width(width), n_fonts, 0)
 
   clusters <- split(seq_along(family), family)
 

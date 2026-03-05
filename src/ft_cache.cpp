@@ -23,7 +23,9 @@ FreetypeCache::FreetypeCache()
     cur_res(-1),
     cur_can_kern(false),
     cur_glyph(0),
-    cur_has_variations(false)
+    cur_has_variations(false),
+    face(nullptr),
+    size(nullptr)
   {
   FT_Error err = FT_Init_FreeType(&library);
   if (err != 0) {
@@ -101,9 +103,9 @@ bool FreetypeCache::load_face(FaceID face) {
     error_code = err;
     err = FT_New_Face(this->library, face.file.c_str(), 0, &new_face);
     if (err != 0) {
+      this->face = nullptr;
       return false;
     }
-
   }
   this->face = new_face;
   cur_is_scalable = FT_IS_SCALABLE(new_face);
@@ -215,7 +217,9 @@ std::string enc_to_string(FT_Encoding_ enc) {
     case FT_ENCODING_UNICODE: return "unicode";
     case FT_ENCODING_MS_SYMBOL: return "microsoft symbol";
     case FT_ENCODING_SJIS: return "shift jis";
+#if (FREETYPE_MAJOR >= 2 && FREETYPE_MINOR >= 8) || FREETYPE_MAJOR > 2
     case FT_ENCODING_PRC: return "prc";
+#endif
     case FT_ENCODING_BIG5: return "big5";
     case FT_ENCODING_WANSUNG: return "extended wansung";
     case FT_ENCODING_JOHAB: return "johab";
@@ -223,6 +227,8 @@ std::string enc_to_string(FT_Encoding_ enc) {
     case FT_ENCODING_ADOBE_STANDARD: return "adobe standard";
     case FT_ENCODING_ADOBE_EXPERT: return "adobe expert";
     case FT_ENCODING_ADOBE_CUSTOM: return "adobe custom";
+    case FT_ENCODING_APPLE_ROMAN: return "apple roman";
+    case FT_ENCODING_OLD_LATIN_2: return "old latin 2";
     default: return "";
   }
 }
