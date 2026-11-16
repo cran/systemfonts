@@ -137,8 +137,12 @@ static inline int get_font_family(const char *path, int index, char* family, int
   }
   return p_get_family(path, index, family, max_length);
 }
-// Get the location of emojis written to the embedding array. A 0 indicate that
-// the codepoint is not to be treated as emoji, a 1 indicate that it should,
+// Get the location of emojis written to the embedding array. A 0 indicates that
+// the codepoint is not to be treated as emoji, a 1 indicates that it should be
+// rendered with the emoji font, and a 2 indicates a text-presentation-default
+// codepoint not covered by the given font that should be rendered as text if
+// any fallback text font covers it, falling back to the emoji font only as a
+// last resort.
 static inline void detect_emoji_embedding(const uint32_t* string, int n, int* embedding, const char *path, int index) {
   static void (*p_detect_emoji_embedding)(const uint32_t*, int, int*, const char*, int) = NULL;
   if (p_detect_emoji_embedding == NULL) {
@@ -223,8 +227,12 @@ namespace systemfonts {
       }
       return p_get_family(font.file, font.index, family, max_length);
     }
-    // Get the location of emojis written to the embedding array. A 0 indicate that
-    // the codepoint is not to be treated as emoji, a 1 indicate that it should,
+    // Get the location of emojis written to the embedding array. A 0 indicates that
+    // the codepoint is not to be treated as emoji, a 1 indicates that it should be
+    // rendered with the emoji font, and a 2 indicates a text-presentation-default
+    // codepoint not covered by the given font that should be rendered as text if
+    // any fallback text font covers it, falling back to the emoji font only as a
+    // last resort.
     static inline void detect_emoji_embedding(const uint32_t* string, int n, int* embedding, const FontSettings2& font) {
       static void (*p_detect_emoji_embedding)(const uint32_t*, int, int*, const char*, int) = NULL;
       if (p_detect_emoji_embedding == NULL) {
@@ -242,6 +250,18 @@ namespace systemfonts {
       return p_get_glyph_path(glyph, t, font, size, no_outline);
     }
 #endif
+    // Get ascent, descent, width, and horizontal bearings of a glyph, given by
+    // its unicode number, a FontSettings2 object, along with its size and the
+    // resolution. The bearings give the offset from the pen position to the
+    // left and top edge of the glyph bitmap (the horiBearingX/horiBearingY
+    // values from FreeType). Returns 0 if successful
+    static inline int glyph_metrics_with_bearing(uint32_t code, const FontSettings2& font, double size, double res, double* ascent, double* descent, double* width, double* x_bearing, double* y_bearing) {
+      static int (*p_glyph_metrics)(uint32_t, const FontSettings2&, double, double, double*, double*, double*, double*, double*) = NULL;
+      if (p_glyph_metrics == NULL) {
+        p_glyph_metrics = (int (*)(uint32_t, const FontSettings2&, double, double, double*, double*, double*, double*, double*)) R_GetCCallable("systemfonts", "glyph_metrics3");
+      }
+      return p_glyph_metrics(code, font, size, res, ascent, descent, width, x_bearing, y_bearing);
+    }
     // Get a raster of a glyph as a nativeRaster
     static inline SEXP get_glyph_raster(int glyph, const FontSettings2& font, double size, double res, int color) {
       static SEXP (*p_get_glyph_raster)(int, const FontSettings2&, double, double, int) = NULL;

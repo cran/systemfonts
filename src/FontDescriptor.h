@@ -74,6 +74,8 @@ inline FontWeight fixed_to_weight(int weight) {
   return (FontWeight) int(weight / FIXED_MOD);
 }
 inline int weight_to_fixed(double weight) {
+  if (!std::isfinite(weight) || weight <= 0.0) return 0;
+  if (weight > 1000.0) weight = 1000.0;
   return weight * FIXED_MOD;
 }
 
@@ -85,10 +87,15 @@ inline int italic_to_fixed(double italic) {
 }
 
 inline FontWidth fixed_to_width(int width) {
-  return width <= 0 ? FontWidthUndefined : (FontWidth) int(std::log2(width / FIXED_MOD) * 4.0 + 5.0);
+  return width <= 0 ? FontWidthUndefined : (FontWidth) int(std::log2(width / (100.0 * FIXED_MOD)) * 4.0 + 5.0);
 }
 inline int width_to_fixed(double width) {
-  return width <= 0.0 ? 0 : std::pow(2.0, (width - 5.0) / 4.0) * FIXED_MOD;
+  if (!std::isfinite(width) || width <= 0.0) return 0;
+  // Clamp so the power-of-two scale can't overflow the 16.16 fixed point
+  if (width > 33.0) width = 33.0;
+  // The fixed representation is on the wdth axis scale (percent of normal),
+  // so it can be used directly as a variation coordinate
+  return std::pow(2.0, (width - 5.0) / 4.0) * 100.0 * FIXED_MOD;
 }
 
 struct FontDescriptor {
@@ -155,7 +162,7 @@ public:
   FontDescriptor(FT_Face face, const char* path, int index, bool variable = false) {
     this->path = copyString(path);
     this->index = index;
-    this->postscriptName = FT_Get_Postscript_Name(face) == NULL ? "" : copyString(FT_Get_Postscript_Name(face));
+    this->postscriptName = FT_Get_Postscript_Name(face) == NULL ? copyString("") : copyString(FT_Get_Postscript_Name(face));
     this->family = copyString(face->family_name);
     this->style = copyString(face->style_name);
     this->weight = get_font_weight(face);

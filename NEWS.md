@@ -1,3 +1,53 @@
+# systemfonts 1.3.3
+
+* `register_font()` and `register_variant()` gain a `variation` argument that
+  lets you attach variable font axis coordinates (a `font_variation()` object)
+  to a registered font, making it possible to register a variable font at
+  specific axis settings under a new name. When a registered font declares a
+  `wght` or `wdth` axis, requests for in-between weight/width values are
+  served by the registered font with the requested coordinate, rather than
+  bypassing the registry. `registry_fonts()` gains a `variations` column
+  reflecting the registered settings
+* On Linux, the `symbol` alias is now resolved by probing a preference list of
+  fonts with correct Unicode cmaps (DejaVu Sans, OpenSymbol, Symbola) before
+  falling back to fontconfig's `symbol` match. Fontconfig often resolves
+  `symbol` to URW's Standard Symbols PS, whose cmap maps e.g. U+00D7 (×) to a
+  dot operator, breaking plotmath output (r-lib/ragg#213)
+* `detect_emoji_embedding()` in the C API now returns a third state (2) for
+  text-presentation-default emoji codepoints (e.g. U+2199) that lack a
+  variation selector and are not covered by the primary font. Consumers can
+  shape these with normal font fallback and only use the emoji font as a last
+  resort, fixing text characters such as arrows being replaced by color emoji
+  (r-lib/ragg#217)
+* `scan_local_fonts()` now only considers files with a known font extension,
+  fixing slow package loading when the scan directories (`./fonts`, `~/fonts`)
+  contain many non-font files (r-lib/ragg#210)
+* The C API now provides the horizontal bearings of a glyph through the new
+  `glyph_metrics_with_bearing()` function (#154)
+* `glyph_bitmap()` now falls back to the nearest bitmap strike that actually
+  carries a glyph when the requested size yields an empty bitmap in a
+  non-scalable font (e.g. Apple Color Emoji glyphs added in later Unicode
+  versions, which lack artwork in the mid-size strikes), instead of returning
+  an empty bitmap
+* Added math alias to select a font suitable for equations (has math table
+  support).
+* Fixed `get_glyph_bitmap()` returning transposed rasters and writing out of
+  bounds for color (BGRA) glyphs.
+* Fixed a typo in the optical_sizing font variation renaming `optz`-> `opsz`
+* Extensive hardening of the C/C++ code: fixed a heap corruption when a font
+  lacks a PostScript name, a stack overflow in `string_widths_dev()` and
+  `string_metrics_dev()` with long family names, cache corruption after failed
+  font loads, resource leaks on macOS and in variable font handling, and
+  out-of-bounds reads on empty or malformed inputs. Variation axis settings
+  are now applied more reliably (hash collisions fixed, defaults restored,
+  invalid values rejected with an error)
+* Removed the unused and broken DirectWrite-based Windows font manager
+* `require_font()` now checks reachability of the actual font repositories
+  instead of probing 8.8.8.8, which is blocked on many corporate networks
+  (#156)
+* Fixed compilation against FreeType < 2.9 which lacks `FT_Done_MM_Var()`
+  (#149, #155)
+
 # systemfonts 1.3.2
 
 * Fixed a compilation error when compiling against very old versions of Freetype

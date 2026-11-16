@@ -41,29 +41,47 @@ all_fonts <- all_fonts[!grepl("^/Users", all_fonts$path),]
 rmarkdown::paged_table(all_fonts)
 
 ## -----------------------------------------------------------------------------
-systemfonts::register_variant(
-  name = "Spectral Light",
-  family = "Spectral",
-  weight = "light"
+spectral_light <- tryCatch(
+  {
+    systemfonts::register_variant(
+      name = "Spectral Light",
+      family = "Spectral",
+      weight = "light"
+    )
+    TRUE
+  },
+  error = function(e) FALSE
 )
 
 ## -----------------------------------------------------------------------------
 grid::grid.text(
   "Light weight is soo classy",
-  gp = grid::gpar(fontfamily = "Spectral Light", fontsize = 30)
+  gp = grid::gpar(
+    fontfamily = if (spectral_light) "Spectral Light" else "serif",
+    fontsize = 30
+  )
 )
 
 ## -----------------------------------------------------------------------------
-systemfonts::register_variant(
-  name = "Spectral Small Caps",
-  family = "Spectral",
-  features = systemfonts::font_feature(
-    letters = "small_caps"
-  )
+spectral_smcp <- tryCatch(
+  {
+    systemfonts::register_variant(
+      name = "Spectral Small Caps",
+      family = "Spectral",
+      features = systemfonts::font_feature(
+        letters = "small_caps"
+      )
+    )
+    TRUE
+  },
+  error = function(e) FALSE
 )
 grid::grid.text(
   "All caps — Small caps",
-  gp = grid::gpar(fontfamily = "Spectral Small Caps", fontsize = 30)
+  gp = grid::gpar(
+    fontfamily = if (spectral_smcp) "Spectral Small Caps" else "serif",
+    fontsize = 30
+  )
 )
 
 ## -----------------------------------------------------------------------------
@@ -75,14 +93,14 @@ grid::grid.text(
 # )
 
 ## -----------------------------------------------------------------------------
-systemfonts::require_font("Barrio")
+systemfonts::require_font("Barrio", fallback = "serif")
 grid::grid.text(
   "A new font a day keeps Tufte away",
   gp = grid::gpar(fontfamily = "Barrio", fontsize = 30)
 )
 
 ## -----------------------------------------------------------------------------
-systemfonts::require_font("Rubik Distressed")
+systemfonts::require_font("Rubik Distressed", fallback = "serif")
 
 grid::grid.text(
   "There are no bad fonts\nonly bad text",

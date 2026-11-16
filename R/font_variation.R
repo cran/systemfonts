@@ -37,10 +37,10 @@
 #' @return A `font_variation` object with coordinates for the provided axes
 #'
 #' @note systemfonts uses a scale of width values ranging from 1-9 while the
-#' width axis uses a different scale (0.5 - 2.0) going from half as wide to
-#' twice as wide as "normal". When using the `width` argument the coordinate
-#' values is automatically converted. If you set the value based on the width
-#' tag (`wdth`) then no conversion will happen.
+#' `wdth` axis is measured in percent of the normal width (i.e. 100 is
+#' "normal", matching CSS `font-stretch`). When using the `width` argument the
+#' coordinate value is automatically converted. If you set the value based on
+#' the width tag (`wdth`) then no conversion will happen.
 #'
 #'
 #' @export
@@ -79,7 +79,7 @@ font_variation <- function(
     if (variations$wdth == 0) {
       variations$wdth <- NULL
     } else {
-      variations$wdth <- 2^((variations$wdth - 5) / 4)
+      variations$wdth <- 2^((variations$wdth - 5) / 4) * 100
     }
   }
   if (is.null(variations$slnt) && !is.null(slant)) {
@@ -87,7 +87,7 @@ font_variation <- function(
   }
   # TODO: Support "auto" (i.e. set it to the size of the font)
   if (is.null(variations$opsz) && !is.null(optical_sizing)) {
-    variations$optz <- as.numeric(optical_sizing)
+    variations$opsz <- as.numeric(optical_sizing)
   }
   variations <- variations[lengths(variations) != 0]
   axes <- names(variations) %||% character(0)
@@ -173,7 +173,7 @@ names.font_variation <- function(x) {
   if (is.character(i)) {
     if (i == "width") {
       i <- "wdth"
-      value <- 2^((value - 5) / 4)
+      value <- 2^((value - 5) / 4) * 100
     } else if (i == "weight") {
       i <- "wght"
     } else if (i == "italic") {
@@ -181,7 +181,7 @@ names.font_variation <- function(x) {
     } else if (i == "slant") {
       i <- "slnt"
     } else if (i == "optical_sizing") {
-      i <- "optz"
+      i <- "opsz"
     }
     i <- axes_to_tags(i)
     ind <- match(i, axes)

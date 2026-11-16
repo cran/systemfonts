@@ -8,8 +8,11 @@
 #include "types.h"
 #include <cpp11/matrix.hpp>
 #include <cpp11/protect.hpp>
+#include <algorithm>
 #include <cstdint>
 #include <cstdlib>
+#include <numeric>
+#include <vector>
 
 #include <ft2build.h>
 #include <string>
@@ -198,6 +201,7 @@ cpp11::writable::data_frame get_glyph_outlines(cpp11::integers glyph, cpp11::str
       continue;
     }
 
+    validate_variation(variations[i]);
     cache.set_axes(INTEGER(variations[i]["axis"]), INTEGER(variations[i]["value"]), Rf_xlength(variations[i]["axis"]));
 
     if (!cache.load_glyph(glyph[i])) {
@@ -238,7 +242,9 @@ cpp11::writable::data_frame get_glyph_outlines(cpp11::integers glyph, cpp11::str
       unscallable.push_back(i+1);
       continue;
     }
-    if (outlines.contour[outlines.contour.size() - 1] != outlines.contour[outlines.contour.size() - 2]) {
+    // Only inspect the terminal point pair if this glyph added at least 2
+    if (outlines.contour.size() >= last_size + 2 &&
+        outlines.contour[outlines.contour.size() - 1] != outlines.contour[outlines.contour.size() - 2]) {
       // Terminal point is singular
       outlines.glyph.pop_back();
       outlines.contour.pop_back();
@@ -271,6 +277,7 @@ double set_font_size(FT_Face face, int size) {
   bool found_match = false;
   for (int i = 0; i < face->num_fixed_sizes; ++i) {
     if (face->available_sizes[i].size > largest_size) {
+      largest_size = face->available_sizes[i].size;
       largest_ind = i;
     }
     int ndiff = face->available_sizes[i].size - size;
@@ -299,8 +306,10 @@ SEXP one_glyph_bitmap(int glyph, const char* path, int index, double size, doubl
 
   double scaling = 72.0 / res;
 
-  if (!FT_IS_SCALABLE(cache.get_face())) {
-    scaling *= set_font_size(cache.get_face(), size * res * 64.0 / 72.0);
+  bool fixed_sizes = !FT_IS_SCALABLE(cache.get_face());
+  int requested_strike = size * res * 64.0 / 72.0;
+  if (fixed_sizes) {
+    scaling *= set_font_size(cache.get_face(), requested_strike);
   }
 
   if (!cache.load_glyph(glyph, FT_HAS_COLOR(cache.get_face()) ? FT_LOAD_COLOR : FT_LOAD_DEFAULT)) {
@@ -327,6 +336,31 @@ SEXP one_glyph_bitmap(int glyph, const char* path, int index, double size, doubl
 
   FT_Bitmap& bitmap = slot->bitmap;
 
+  // Bitmap strikes can be sparse per glyph (e.g. Apple Color Emoji glyphs
+  // added in later Unicode versions lack artwork in the mid-size strikes).
+  // When the selected strike yields an empty bitmap, fall back to the
+  // nearest strike that carries the glyph
+  if (fixed_sizes && (bitmap.width == 0 || bitmap.rows == 0)) {
+    FT_Face face = cache.get_face();
+    std::vector<int> strikes(face->num_fixed_sizes);
+    std::iota(strikes.begin(), strikes.end(), 0);
+    std::sort(strikes.begin(), strikes.end(), [&](int a, int b) {
+      return std::abs(face->available_sizes[a].size - requested_strike) <
+             std::abs(face->available_sizes[b].size - requested_strike);
+    });
+    for (int strike : strikes) {
+      if (FT_Select_Size(face, strike) != 0) continue;
+      if (!cache.load_glyph(glyph, FT_HAS_COLOR(face) ? FT_LOAD_COLOR : FT_LOAD_DEFAULT)) continue;
+      if (FT_Render_Glyph(slot, FT_RENDER_MODE_NORMAL) != 0) continue;
+      if (bitmap.width != 0 && bitmap.rows != 0) {
+        // Keep the raster-to-point scaling in sync with the new strike
+        scaling = (72.0 / res) *
+                  (double(requested_strike) / double(face->size->metrics.height));
+        break;
+      }
+    }
+  }
+
   if (bitmap.pixel_mode != FT_PIXEL_MODE_GRAY && bitmap.pixel_mode != FT_PIXEL_MODE_BGRA) {
     if (verbose) {
       cpp11::warning("Unsupported pixel mode for glyph %i in %s:%i", glyph, path, index);
@@ -335,12 +369,17 @@ SEXP one_glyph_bitmap(int glyph, const char* path, int index, double size, doubl
   }
 
   const unsigned char* buffer = bitmap.buffer;
-  SEXP raster = PROTECT(Rf_allocMatrix(INTSXP, bitmap.width, bitmap.rows));
+  SEXP raster = PROTECT(Rf_allocMatrix(INTSXP, bitmap.rows, bitmap.width));
   int* raster_p = INTEGER(raster);
-  size_t offset = 0;
+  // pitch can be negative for bottom-up bitmaps; keep offset signed so the
+  // row pointer walks in the correct direction either way. With a negative
+  // pitch, buffer points at the first (top) row's lowest address, so rows
+  // are walked backwards from there
+  ptrdiff_t offset = bitmap.pitch < 0 ? -(ptrdiff_t) bitmap.pitch * (bitmap.rows - 1) : 0;
   for (size_t j = 0; j < bitmap.rows; ++j) {
-    for (int k = 0; k < bitmap.pitch; ++k) {
-      size_t index = k + j*bitmap.width;
+    for (int k = 0; k < bitmap.width; ++k) {
+      // nativeRaster layout: h x w, column-major, first row is the top
+      size_t index = j + (size_t)k * bitmap.rows;
       switch (bitmap.pixel_mode) {
         case FT_PIXEL_MODE_GRAY: {
           if (buffer[offset + k] == 0) raster_p[index] = R_RGBA(0, 0, 0, 0);
@@ -348,12 +387,12 @@ SEXP one_glyph_bitmap(int glyph, const char* path, int index, double size, doubl
           break;
         };
         case FT_PIXEL_MODE_BGRA: {
-          size_t index = offset + k * 4;
+          ptrdiff_t buf_index = offset + (ptrdiff_t)k * 4;
           raster_p[index] = R_RGBA(
-            demultiply(buffer[index + 2], buffer[index + 3]),
-            demultiply(buffer[index + 1], buffer[index + 3]),
-            demultiply(buffer[index + 0], buffer[index + 3]),
-            buffer[index + 3]
+            demultiply(buffer[buf_index + 2], buffer[buf_index + 3]),
+            demultiply(buffer[buf_index + 1], buffer[buf_index + 3]),
+            demultiply(buffer[buf_index + 0], buffer[buf_index + 3]),
+            buffer[buf_index + 3]
           );
           break;
         };
@@ -362,7 +401,8 @@ SEXP one_glyph_bitmap(int glyph, const char* path, int index, double size, doubl
     offset += bitmap.pitch;
   }
   double offset_top = slot->bitmap_top;
-  if (!strcmp("Apple Color Emoji", cache.get_face()->family_name)) {
+  const char* face_family = cache.get_face()->family_name;
+  if (face_family != NULL && !strcmp("Apple Color Emoji", face_family)) {
     offset_top -= bitmap.rows * 0.1;
   }
   SEXP dims = PROTECT(Rf_allocVector(INTSXP, 2));
@@ -390,25 +430,22 @@ cpp11::writable::list get_glyph_bitmap(cpp11::integers glyph, cpp11::strings pat
   FreetypeCache& cache = get_font_cache();
 
   for (R_xlen_t i = 0; i < glyph.size(); ++i) {
-    SEXP bitmap = PROTECT(
-      one_glyph_bitmap(
-        glyph[i],
-        std::string(path[i]).c_str(),
-        index[i],
-        size[i],
-        res[i],
-        INTEGER(variations[i]["axis"]),
-        INTEGER(variations[i]["value"]),
-        Rf_xlength(variations[i]["axis"]),
-        color[i],
-        cache,
-        verbose
-      )
+    validate_variation(variations[i]);
+    SEXP bitmap = one_glyph_bitmap(
+      glyph[i],
+      std::string(path[i]).c_str(),
+      index[i],
+      size[i],
+      res[i],
+      INTEGER(variations[i]["axis"]),
+      INTEGER(variations[i]["value"]),
+      Rf_xlength(variations[i]["axis"]),
+      color[i],
+      cache,
+      verbose
     );
     bitmaps.push_back(bitmap);
   }
-
-  UNPROTECT(glyph.size());
 
   return bitmaps;
 }
@@ -518,25 +555,42 @@ std::string get_glyph_path_impl(int glyph, double* t, bool* no_outline, const ch
   return path_outline.path;
 }
 std::string get_glyph_path(int glyph, double* t, const char* path, int index, double size, bool* no_outline) {
+  std::string res = "";
+  BEGIN_CPP
+
   FreetypeCache& cache = get_font_cache();
   if (!cache.load_font(path, index, size, 72.0)) {
     cpp11::warning("Failed to load %s:%i with freetype error %i", path, index, cache.error_code);
-    return "";
+    return res;
   }
-  return get_glyph_path_impl(glyph, t, no_outline, path, index);
+  res = get_glyph_path_impl(glyph, t, no_outline, path, index);
+
+  END_CPP
+
+  return res;
 }
 std::string get_glyph_path2(int glyph, double* t, const FontSettings2& font, double size, bool* no_outline) {
+  std::string res = "";
+  BEGIN_CPP
+
   FreetypeCache& cache = get_font_cache();
   if (!cache.load_font(font.file, font.index, size, 72.0)) {
     cpp11::warning("Failed to load %s:%i with freetype error %i", font.file, font.index, cache.error_code);
-    return "";
+    return res;
   }
   cache.set_axes(font.axes, font.coords, font.n_axes);
-  return get_glyph_path_impl(glyph, t, no_outline, font.file, font.index);
+  res = get_glyph_path_impl(glyph, t, no_outline, font.file, font.index);
+
+  END_CPP
+
+  return res;
 }
 SEXP get_glyph_raster(int glyph, const char* path, int index, double size, double res, int color) {
+  SEXP raster = R_NilValue;
+  BEGIN_CPP
+
   FreetypeCache& cache = get_font_cache();
-  return one_glyph_bitmap(
+  raster = one_glyph_bitmap(
     glyph,
     path,
     index,
@@ -549,11 +603,18 @@ SEXP get_glyph_raster(int glyph, const char* path, int index, double size, doubl
     cache,
     true
   );
+
+  END_CPP
+
+  return raster;
 }
 
 SEXP get_glyph_raster2(int glyph, const FontSettings2& font, double size, double res, int color) {
+  SEXP raster = R_NilValue;
+  BEGIN_CPP
+
   FreetypeCache& cache = get_font_cache();
-  return one_glyph_bitmap(
+  raster = one_glyph_bitmap(
     glyph,
     font.file,
     font.index,
@@ -566,6 +627,10 @@ SEXP get_glyph_raster2(int glyph, const FontSettings2& font, double size, double
     cache,
     true
   );
+
+  END_CPP
+
+  return raster;
 }
 
 void export_font_outline(DllInfo* dll) {

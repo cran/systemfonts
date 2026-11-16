@@ -29,12 +29,12 @@ using namespace cpp11::literals;
 data_frame_w get_font_info_c(strings_t path, integers_t index, doubles_t size, doubles_t res, cpp11::list_of<list_t> variations) {
   static strings_w var_names = {"set", "min", "def", "max"};
   bool one_path = path.size() == 1;
-  const char* first_path = Rf_translateCharUTF8(path[0]);
-  int first_index = index[0];
+  const char* first_path = path.size() > 0 ? Rf_translateCharUTF8(path[0]) : nullptr;
+  int first_index = index.size() > 0 ? index[0] : 0;
   bool one_size = size.size() == 1;
-  double first_size = size[0];
+  double first_size = size.size() > 0 ? size[0] : 12;
   bool one_res = res.size() == 1;
-  double first_res = res[0];
+  double first_res = res.size() > 0 ? res[0] : 72;
   int full_length = 1;
   if (!one_path) full_length = path.size();
   else if (!one_size) full_length = size.size();
@@ -102,9 +102,10 @@ data_frame_w get_font_info_c(strings_t path, integers_t index, doubles_t size, d
       one_res ? first_res : res[i]
     );
     if (!success) {
-      cpp11::stop("Failed to open font file (%s) with freetype error %i", Rf_translateCharUTF8(path[i]), cache.error_code);
+      cpp11::stop("Failed to open font file (%s) with freetype error %i", one_path ? first_path : Rf_translateCharUTF8(path[i]), cache.error_code);
     }
 
+    validate_variation(variations[i]);
     cache.set_axes(INTEGER(variations[i]["axis"]), INTEGER(variations[i]["value"]), Rf_xlength(variations[i]["axis"]));
 
     FontFaceInfo info = cache.font_info();
@@ -199,12 +200,12 @@ data_frame_w get_glyph_info_c(strings_t glyphs, strings_t path, integers_t index
   int n_glyphs = glyphs.size();
 
   bool one_path = path.size() == 1;
-  const char* first_path = Rf_translateCharUTF8(path[0]);
-  int first_index = index[0];
+  const char* first_path = path.size() > 0 ? Rf_translateCharUTF8(path[0]) : nullptr;
+  int first_index = index.size() > 0 ? index[0] : 0;
   bool one_size = size.size() == 1;
-  double first_size = size[0];
+  double first_size = size.size() > 0 ? size[0] : 12;
   bool one_res = res.size() == 1;
-  double first_res = res[0];
+  double first_res = res.size() > 0 ? res[0] : 72;
 
   FreetypeCache& cache = get_font_cache();
 
@@ -230,16 +231,17 @@ data_frame_w get_glyph_info_c(strings_t glyphs, strings_t path, integers_t index
       one_res ? first_res : res[i]
     );
     if (!success) {
-      cpp11::stop("Failed to open font file (%s) with freetype error %i", Rf_translateCharUTF8(path[i]), cache.error_code);
+      cpp11::stop("Failed to open font file (%s) with freetype error %i", one_path ? first_path : Rf_translateCharUTF8(path[i]), cache.error_code);
     }
 
+    validate_variation(variations[i]);
     cache.set_axes(INTEGER(variations[i]["axis"]), INTEGER(variations[i]["value"]), Rf_xlength(variations[i]["axis"]));
 
     const char* glyph = Rf_translateCharUTF8(glyphs[i]);
     uint32_t* glyph_code = utf_converter.convert(glyph, length);
     GlyphInfo glyph_info = cache.cached_glyph_info(glyph_code[0], error_c);
     if (error_c != 0) {
-      cpp11::stop("Failed to load `%s` from font (%s) with freetype error %i", glyph, Rf_translateCharUTF8(path[i]), error_c);
+      cpp11::stop("Failed to load `%s` from font (%s) with freetype error %i", glyph, one_path ? first_path : Rf_translateCharUTF8(path[i]), error_c);
     }
 
     glyph_ids[i] = glyph_info.index;
@@ -323,6 +325,33 @@ int glyph_metrics2(uint32_t code, const FontSettings2& font, double size,
   return 0;
 }
 
+int glyph_metrics3(uint32_t code, const FontSettings2& font, double size,
+  double res, double* ascent, double* descent, double* width,
+  double* x_bearing, double* y_bearing) {
+  BEGIN_CPP
+
+  FreetypeCache& cache = get_font_cache();
+  if (!cache.load_font(font.file, font.index, size, res)) {
+    return cache.error_code;
+  }
+  cache.set_axes(font.axes, font.coords, font.n_axes);
+  int error = 0;
+  GlyphInfo metrics = cache.cached_glyph_info(code, error);
+
+  if (error != 0) {
+    return error;
+  }
+  *width = metrics.x_advance / 64.0;
+  *ascent = metrics.bbox[3] / 64.0;
+  *descent = -metrics.bbox[2] / 64.0;
+  *x_bearing = metrics.x_bearing / 64.0;
+  *y_bearing = metrics.y_bearing / 64.0;
+
+  END_CPP
+
+  return 0;
+}
+
 int font_weight(const char* fontfile, int index) {
   BEGIN_CPP
 
@@ -373,6 +402,7 @@ int font_family(const char* fontfile, int index, char* family, int max_length) {
 void export_font_metrics(DllInfo* dll) {
   R_RegisterCCallable("systemfonts", "glyph_metrics", (DL_FUNC)glyph_metrics);
   R_RegisterCCallable("systemfonts", "glyph_metrics2", (DL_FUNC)glyph_metrics2);
+  R_RegisterCCallable("systemfonts", "glyph_metrics3", (DL_FUNC)glyph_metrics3);
   R_RegisterCCallable("systemfonts", "font_weight", (DL_FUNC)font_weight);
   R_RegisterCCallable("systemfonts", "font_weight2", (DL_FUNC)font_weight2);
   R_RegisterCCallable("systemfonts", "font_family", (DL_FUNC)font_family);

@@ -39,6 +39,28 @@ ResultSet *findFonts(FontDescriptor *);
 FontDescriptor *findFont(FontDescriptor *);
 void resetFontCache();
 
+#if !defined _WIN32 && !defined __APPLE__
+static const char* cached_math_font = nullptr;
+static const char* cached_symbol_font = nullptr;
+
+// Probe a preference list of fonts, caching and returning the first match,
+// or the provided fallback if none are found
+static const char* probe_preferred_fonts(const char* const* candidates, const char* fallback, const char*& cache) {
+  if (cache == nullptr) {
+    cache = fallback;
+    for (int i = 0; candidates[i] != nullptr; ++i) {
+      FontDescriptor desc(candidates[i], false, FontWeightNormal, FontWidthNormal);
+      std::unique_ptr<FontDescriptor> loc(findFont(&desc));
+      if (loc) {
+        cache = candidates[i];
+        break;
+      }
+    }
+  }
+  return cache;
+}
+#endif
+
 void locate_systemfont(const char *family, int italic, int weight, int width, FontSettings2& res) {
   const char* resolved_family = family;
   if (strcmp_no_case(family, "") || strcmp_no_case(family, "sans")) {
@@ -50,7 +72,33 @@ void locate_systemfont(const char *family, int italic, int weight, int width, Fo
   } else if (strcmp_no_case(family, "emoji")) {
     resolved_family = EMOJI;
   } else if (strcmp_no_case(family, "symbol")) {
+#if defined _WIN32 || defined __APPLE__
     resolved_family = SYMBOL;
+#else
+    // Fontconfig often resolves "symbol" to fonts with a broken Unicode
+    // cmap (e.g. URW Standard Symbols PS maps U+00D7 to a dot operator), so
+    // prefer fonts known to map the plotmath glyph set correctly
+    static const char* symbol_fonts[] = {
+      "DejaVu Sans",
+      "OpenSymbol",
+      "Symbola",
+      nullptr
+    };
+    resolved_family = probe_preferred_fonts(symbol_fonts, SYMBOL, cached_symbol_font);
+#endif
+  } else if (strcmp_no_case(family, "math")) {
+#if defined _WIN32 || defined __APPLE__
+    resolved_family = MATH;
+#else
+    // Try math fonts in order of preference, fall back to symbol
+    static const char* math_fonts[] = {
+      "STIX Two Math",
+      "Latin Modern Math",
+      "TeX Gyre Termes Math",
+      nullptr
+    };
+    resolved_family = probe_preferred_fonts(math_fonts, SYMBOL, cached_math_font);
+#endif
   }
   FontMap& font_map = get_font_map();
   static FontKey key;
@@ -88,23 +136,25 @@ void locate_systemfont(const char *family, int italic, int weight, int width, Fo
       cached_loc.axes.push_back(ITAL_TAG);
       cached_loc.coords.push_back(italic);
     }
-    if (font_loc->var_wght) {
+    if (font_loc->var_wght && weight != 0) {
       cached_loc.axes.push_back(WGHT_TAG);
       cached_loc.coords.push_back(weight);
     }
-    if (font_loc->var_wdth) {
+    if (font_loc->var_wdth && width != 0) {
       cached_loc.axes.push_back(WDTH_TAG);
       cached_loc.coords.push_back(width);
     }
   }
   font_map[key] = cached_loc;
 
-  strncpy(res.file, cached_loc.file.c_str(), PATH_MAX);
+  // Point into the stored map entry; cached_loc goes out of scope on return
+  FontLoc& stored_loc = font_map[key];
+  strncpy(res.file, stored_loc.file.c_str(), PATH_MAX);
   res.file[PATH_MAX] = '\0';
-  res.index = cached_loc.index;
-  res.axes = cached_loc.axes.data();
-  res.coords = cached_loc.coords.data();
-  res.n_axes = cached_loc.axes.size();
+  res.index = stored_loc.index;
+  res.axes = stored_loc.axes.data();
+  res.coords = stored_loc.coords.data();
+  res.n_axes = stored_loc.axes.size();
 }
 
 int locate_font(const char *family, int italic, int bold, char *path, int max_path_length) {
@@ -153,9 +203,12 @@ FontSettings2 locate_font_with_features2(const char *family, double italic, doub
 
   BEGIN_CPP
 
+  // Clamp inputs before casting to the enums to avoid undefined behaviour
+  double weight_clamped = std::isfinite(weight) ? std::min(1000.0, std::max(0.0, weight)) : 0.0;
+  double width_clamped = std::isfinite(width) ? std::min(9.0, std::max(0.0, width)) : 0.0;
   int italic_int = italic_to_fixed(italic);
-  int weight_int = weight_to_fixed(FontWeight(weight));
-  int width_int = width_to_fixed(FontWidth(width));
+  int weight_int = weight_to_fixed(FontWeight(weight_clamped));
+  int width_int = width_to_fixed(FontWidth(width_clamped));
 
 
   for (int i = 0; i < n_axes; ++i) {
@@ -178,6 +231,30 @@ FontSettings2 locate_font_with_features2(const char *family, double italic, doub
       width_int,
       match
     );
+  } else if (n_axes > 0) {
+    // Merge caller-provided axes over the registered coordinates; caller
+    // settings take precedence
+    static std::vector<int> merged_axes;
+    static std::vector<int> merged_coords;
+    if (match.n_axes > 0) {
+      merged_axes.assign(match.axes, match.axes + match.n_axes);
+      merged_coords.assign(match.coords, match.coords + match.n_axes);
+    } else {
+      merged_axes.clear();
+      merged_coords.clear();
+    }
+    for (int i = 0; i < n_axes; ++i) {
+      auto it = std::find(merged_axes.begin(), merged_axes.end(), axes[i]);
+      if (it == merged_axes.end()) {
+        merged_axes.push_back(axes[i]);
+        merged_coords.push_back(coords[i]);
+      } else {
+        merged_coords[it - merged_axes.begin()] = coords[i];
+      }
+    }
+    match.axes = merged_axes.data();
+    match.coords = merged_coords.data();
+    match.n_axes = merged_axes.size();
   }
 
   END_CPP
@@ -223,13 +300,47 @@ data_frame_w locate_fonts_c(strings_t family, doubles_t italic,
   list_w features;
   list_w variations;
 
-  FontSettings2 match = {};
-
   for (R_xlen_t i = 0; i < family.size(); ++i) {
+    // Reset per iteration; neither locate function clears the other's fields
+    FontSettings2 match = {};
     const char* fam = Rf_translateCharUTF8(family[i]);
     bool standard_width = (width[i] == static_cast<double>(FontWidthUndefined) || width[i] == static_cast<double>(FontWidthNormal));
     bool standard_weight = (weight[i] == static_cast<double>(FontWeightNormal) || weight[i] == static_cast<double>(FontWeightBold) || weight[i] == static_cast<double>(FontWeightUndefined));
-    if (!(standard_width && standard_weight && locate_in_registry(fam, italic[i], weight[i] != static_cast<double>(FontWeightNormal), match))) {
+    bool found = false;
+    // Storage for coordinate overrides; consumed immediately below
+    std::vector<int> axes_copy;
+    std::vector<int> coords_copy;
+    if (standard_width && standard_weight) {
+      found = locate_in_registry(fam, italic[i], weight[i] != static_cast<double>(FontWeightNormal), match);
+    } else if (locate_in_registry(fam, italic[i], weight[i] >= 650.0 && weight[i] < 750.0, match)) {
+      // A registered font can serve a non-standard weight/width request if it
+      // declares the corresponding variation axis; the requested value then
+      // overrides the registered coordinate for that axis
+      bool wght_ok = standard_weight;
+      bool wdth_ok = standard_width;
+      if (match.n_axes > 0) {
+        axes_copy.assign(match.axes, match.axes + match.n_axes);
+        coords_copy.assign(match.coords, match.coords + match.n_axes);
+      }
+      for (int j = 0; j < match.n_axes; ++j) {
+        if (axes_copy[j] == WGHT_TAG) {
+          wght_ok = true;
+          if (!standard_weight) coords_copy[j] = weight_to_fixed(weight[i]);
+        } else if (axes_copy[j] == WDTH_TAG) {
+          wdth_ok = true;
+          if (!standard_width) coords_copy[j] = width_to_fixed(width[i]);
+        }
+      }
+      if (wght_ok && wdth_ok) {
+        found = true;
+        match.axes = axes_copy.data();
+        match.coords = coords_copy.data();
+      } else {
+        // locate_systemfont() doesn't touch features; clear stale registry state
+        match = FontSettings2();
+      }
+    }
+    if (!found) {
       locate_systemfont(
         fam,
         italic_to_fixed(italic[i]),
@@ -317,24 +428,31 @@ data_frame_w system_fonts_c() {
 
   int i = 0;
 
-  for (ResultSet::iterator it = all_fonts->begin(); it != all_fonts->end(); it++) {
-    path[i] = (*it)->get_path();
-    index[i] = (*it)->index;
-    name[i] = (*it)->get_psname();
-    family[i] = (*it)->get_family();
-    style[i] = (*it)->get_style();
-    weight[i] = (*it)->get_weight();
-    if (weight[i] == 0) {
-      weight[i] = NA_INTEGER;
+  try {
+    for (ResultSet::iterator it = all_fonts->begin(); it != all_fonts->end(); it++) {
+      path[i] = (*it)->get_path();
+      index[i] = (*it)->index;
+      name[i] = (*it)->get_psname();
+      family[i] = (*it)->get_family();
+      style[i] = (*it)->get_style();
+      weight[i] = (*it)->get_weight();
+      if (weight[i] == 0) {
+        weight[i] = NA_INTEGER;
+      }
+      width[i] = (*it)->get_width();
+      if (width[i] == 0) {
+        width[i] = NA_INTEGER;
+      }
+      italic[i] = (Rboolean) (*it)->italic;
+      monospace[i] = (Rboolean) (*it)->monospace;
+      variable[i] = (Rboolean) (*it)->variable;
+      ++i;
     }
-    width[i] = (*it)->get_width();
-    if (width[i] == 0) {
-      width[i] = NA_INTEGER;
-    }
-    italic[i] = (Rboolean) (*it)->italic;
-    monospace[i] = (Rboolean) (*it)->monospace;
-    variable[i] = (Rboolean) (*it)->variable;
-    ++i;
+  } catch (...) {
+    // Remove the borrowed local font pointers before the owning ResultSet
+    // destructor runs, then rethrow
+    all_fonts->erase(all_fonts->begin(), all_fonts->begin() + get_local_font_list().size());
+    throw;
   }
 
   // Remove local fonts so they don't get deleted at cleanup
@@ -359,6 +477,10 @@ data_frame_w system_fonts_c() {
 void reset_font_cache_c() {
   resetFontCache();
   get_font_map().clear();
+#if !defined _WIN32 && !defined __APPLE__
+  cached_math_font = nullptr;
+  cached_symbol_font = nullptr;
+#endif
 }
 
 void export_font_matching(DllInfo* dll) {
