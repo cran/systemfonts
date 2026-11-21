@@ -1,7 +1,7 @@
-2562755949e2e92dab5d59a09d78677a *DESCRIPTION
+b2922775b6c03e11ff9576c9ccb0d65d *DESCRIPTION
 23a3718c6a01d1fb6750f38c780d4392 *LICENSE
 81d29530873396451ccb04ddcc9bd174 *NAMESPACE
-835d863d50d0a12161a11b8861d0b82f *NEWS.md
+c5538c5b4a71d5616244650773206643 *NEWS.md
 330efbb490e376f784fcc759f7b008ad *R/cpp11.R
 136e56e74c6364afa1deead511e6311b *R/dev_strings.R
 4187da07dce583663b6b375602d9632a *R/emoji.R
@@ -98,7 +98,7 @@ f090ad50f988f413bcfd2ab087417593 *src/font_outlines.h
 097972e6a5f5039f0c532d763b4c1660 *src/font_registry.h
 f10b8f19003aed165ed9a9d8f3428bf3 *src/font_variation.cpp
 7a638fc081cc538f703af5c8be05f209 *src/font_variation.h
-e7b587f8ba97a9d3449181d7fc1ee03f *src/ft_cache.cpp
+418d14f58cd18367f2a421b2217a3051 *src/ft_cache.cpp
 8357460066cb9e538b45970465a6f53b *src/ft_cache.h
 6c1d002cfbd08c190f4119331fd407f1 *src/init.cpp
 aab7d164386c6a0960dce372c7746db2 *src/mac/FontManagerMac.mm
